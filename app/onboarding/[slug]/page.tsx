@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import { CheckCircle2, Sparkles, Building2, Clock, Wrench, HelpCircle, Award, Users, Star, Image as ImageIcon, Send } from 'lucide-react';
+import { CheckCircle2, Sparkles, Building2, Clock, Wrench, Award, Star, Image as ImageIcon, Send } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function OnboardingPage() {
+function OnboardingForm() {
   const params = useParams();
   const slug = params?.slug as string;
 
@@ -55,7 +55,6 @@ export default function OnboardingPage() {
       const battlecard = data.ai_battlecard || {};
       const savedBriefing = data.briefing_data?.answers || {};
 
-      // Pré-preenche 80% do formulário com os dados minerados no Google Maps e inferidos pela IA
       const prefilledServices = (site.services || [])
         .map((s: any, i: number) => `${i + 1}. ${s.title}: ${s.description}`)
         .join('\n');
@@ -90,7 +89,6 @@ export default function OnboardingPage() {
     e.preventDefault();
     setSaving(true);
 
-    // Gera automaticamente o documento briefing.md estruturado (Etapa 2 do POP)
     const briefingMarkdown = `# Briefing Oficial de Produção — ${form.q1_name}
 
 ## 1. Dados Oficiais e Localização
@@ -138,7 +136,7 @@ ${form.q8_logo_and_photos_notes || 'Arquivos serão enviados pelo WhatsApp.'}
     if (!error) {
       setSubmitted(true);
     } else {
-      alert('Erro ao salvar o briefing. Verifique a permissão no Supabase.');
+      alert('Erro ao salvar o briefing. Verifique se rodou o comando SQL no Supabase.');
     }
   }
 
@@ -153,7 +151,7 @@ ${form.q8_logo_and_photos_notes || 'Arquivos serão enviados pelo WhatsApp.'}
   if (notFoundLead) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-800 font-sans">
-        Empresa não encontrada para o identificador: <strong>{slug}</strong>
+        Empresa não encontrada para o identificador: <strong className="ml-1">{slug}</strong>
       </div>
     );
   }
@@ -185,7 +183,6 @@ ${form.q8_logo_and_photos_notes || 'Arquivos serão enviados pelo WhatsApp.'}
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 font-sans text-slate-900">
       <div className="max-w-3xl mx-auto">
-        {/* Cabeçalho do Onboarding Inteligente */}
         <div className="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 mb-8 shadow-md">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold mb-4 border border-emerald-500/30">
             <Sparkles className="w-3.5 h-3.5" />
@@ -376,5 +373,20 @@ ${form.q8_logo_and_photos_notes || 'Arquivos serão enviados pelo WhatsApp.'}
         </form>
       </div>
     </div>
+  );
+}
+
+// Envelopa o componente em <Suspense> para compatibilidade total com o build da Vercel (Next.js cacheComponents)
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-600 font-sans">
+          Carregando formulário de configuração...
+        </div>
+      }
+    >
+      <OnboardingForm />
+    </Suspense>
   );
 }
