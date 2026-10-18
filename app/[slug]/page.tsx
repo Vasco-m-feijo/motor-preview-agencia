@@ -46,17 +46,44 @@ const ARCHETYPES: LayoutArchetype[] = [
   'industrial-bold', // 3: betos-car-tristeza
 ];
 
-function getDesignSystemForSlug(slug: string) {
+// Substitua a função getDesignSystemForSlug(slug: string) por esta versão que lê o tema salvo no /painel:
+function getDesignSystemForSlug(slug: string, savedTheme?: any) {
   let sum = 0;
   for (let i = 0; i < slug.length; i++) {
     sum += slug.charCodeAt(i);
   }
-  const archetype = ARCHETYPES[sum % ARCHETYPES.length];
-  const palette = BRAND_PALETTES[sum % BRAND_PALETTES.length];
+
+  const autoArchetype = ARCHETYPES[sum % ARCHETYPES.length];
+  const autoPalette = BRAND_PALETTES[sum % BRAND_PALETTES.length];
+
+  // 1. Se você escolheu um arquétipo manualmente no /painel, usa ele; senão usa o automático do slug
+  const chosenArchetype: LayoutArchetype =
+    savedTheme?.archetype && ARCHETYPES.includes(savedTheme.archetype)
+      ? savedTheme.archetype
+      : autoArchetype;
+
+  // 2. Se você escolheu uma paleta pelo nome no /painel, busca na lista
+  const matchedPalette = savedTheme?.palette_name
+    ? BRAND_PALETTES.find((p) => p.name === savedTheme.palette_name)
+    : null;
+
+  // 3. Se você definiu uma cor hexadecimal customizada (ex: cor da logo no pacote Estrutura Pro), aplica ela
+  if (savedTheme?.custom_hex) {
+    return {
+      archetype: chosenArchetype,
+      name: 'Custom Brand',
+      primary: savedTheme.custom_hex,
+      primaryDark: savedTheme.custom_hex,
+      accent: savedTheme.custom_hex,
+      surface: '#F8FAFC',
+    };
+  }
+
+  const finalPalette = matchedPalette || autoPalette;
 
   return {
-    archetype,
-    ...palette,
+    archetype: chosenArchetype,
+    ...finalPalette,
   };
 }
 
@@ -108,7 +135,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
   const displayAddress = answers.q1_address || config.location?.address || biz.address;
   const displayCnpj = answers.q1_cnpj || '';
 
-  const design = getDesignSystemForSlug(slug);
+  const design = getDesignSystemForSlug(slug, config.theme);
   const hero = config.hero || {};
   const services = config.services || [];
   const differentials = config.differentials || {};

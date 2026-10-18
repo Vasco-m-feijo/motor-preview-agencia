@@ -13,6 +13,8 @@ import {
   Rocket,
   ClipboardCheck,
   RefreshCw,
+  Palette,
+  Layout,
 } from 'lucide-react';
 
 const supabase = createClient(
@@ -29,12 +31,33 @@ const STATUS_OPTIONS = [
   'Em Produção',
 ];
 
+const ARCHETYPE_OPTIONS = [
+  { value: '', label: '⚡ Automático (Pelo Slug)' },
+  { value: 'dark-carbon', label: '1. Dark Carbono Performance (Escuro)' },
+  { value: 'editorial-pill', label: '2. Editorial Clean & Menu Pílula' },
+  { value: 'bento-modern', label: '3. Bento Grid Assimétrico' },
+  { value: 'industrial-bold', label: '4. Industrial Forte (Bordas Pretas)' },
+];
+
+const PALETTE_OPTIONS = [
+  { value: '', label: '⚡ Automática (Pelo Slug)', hex: '' },
+  { value: 'Crimson Industrial', label: '🔴 Vermelho Rubi (#E11D48)', hex: '#E11D48' },
+  { value: 'Royal Sapphire', label: '🔵 Azul Safira (#1D4ED8)', hex: '#1D4ED8' },
+  { value: 'Emerald Prestige', label: '🟢 Verde Esmeralda (#059669)', hex: '#059669' },
+  { value: 'Ruby Racing', label: '🩸 Vermelho Racing (#DC2626)', hex: '#DC2626' },
+  { value: 'Orange Performance', label: '🟠 Laranja Fogo (#EA580C)', hex: '#EA580C' },
+  { value: 'Ocean Cyan', label: '🩵 Azul Oceano (#0284C7)', hex: '#0284C7' },
+  { value: 'Indigo Executive', label: '🟣 Índigo Executivo (#4F46E5)', hex: '#4F46E5' },
+  { value: 'Amber Gold', label: '🟡 Âmbar Ouro (#D97706)', hex: '#D97706' },
+];
+
 export default function AgencyDashboard() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('Todos');
   const [openBriefingSlug, setOpenBriefingSlug] = useState<string | null>(null);
   const [openProposalSlug, setOpenProposalSlug] = useState<string | null>(null);
+  const [savingThemeSlug, setSavingThemeSlug] = useState<string | null>(null);
 
   async function fetchLeads() {
     setLoading(true);
@@ -61,6 +84,35 @@ export default function AgencyDashboard() {
       .from('leads_pipeline')
       .update({ status: newStatus })
       .eq('slug', slug);
+  }
+
+  async function updateLeadTheme(lead: any, updates: Record<string, any>) {
+    setSavingThemeSlug(lead.slug);
+    const currentConfig = lead.site_config || {};
+    const currentTheme = currentConfig.theme || {};
+
+    const updatedTheme = {
+      ...currentTheme,
+      ...updates,
+    };
+
+    const updatedSiteConfig = {
+      ...currentConfig,
+      theme: updatedTheme,
+    };
+
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.slug === lead.slug ? { ...l, site_config: updatedSiteConfig } : l
+      )
+    );
+
+    await supabase
+      .from('leads_pipeline')
+      .update({ site_config: updatedSiteConfig })
+      .eq('slug', lead.slug);
+
+    setSavingThemeSlug(null);
   }
 
   function handleOneClickClose(lead: any) {
@@ -106,12 +158,13 @@ export default function AgencyDashboard() {
 *2. Estrutura Pro (Carro-Chefe Recomendado)*
 • Tudo do pacote Presença Local
 • Landing Page Profissional Mobile-First de Alta Conversão
+• Identidade visual com as cores da sua marca + Domínio próprio (.com.br)
 • SEO Local geolocalizado + Rastreamento de cliques no WhatsApp
 
 *3. Ecossistema & Automação (Premium)*
 • Tudo do pacote Estrutura Pro
 • Automação de triagem e pré-atendimento no WhatsApp
-• Catálogo digital de serviços + Relatório mensal de cliques
+• Catálogo digital de serviços gerenciável + Relatório mensal de cliques
 
 💡 *Recomendação Estratégica:* ${bc.pacote_recomendado || '2. Estrutura Pro'}`;
   }
@@ -129,13 +182,13 @@ export default function AgencyDashboard() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold mb-2 border border-emerald-500/30">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Fábrica Autônoma • Central de Operações e SDR</span>
+              <span>Fábrica Autônoma • Central de Operações, Design & SDR</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
-              Pipeline de Leads & Fechamento
+              Pipeline de Leads & Customização Visual
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Gerencie abordagens, visualize Battlecards, envie propostas e acesse os Briefings preenchidos.
+              Gerencie abordagens, troque o arquétipo/cor de qualquer site em 1 clique e acesse os Briefings preenchidos.
             </p>
           </div>
 
@@ -180,6 +233,7 @@ export default function AgencyDashboard() {
               const bc = lead.ai_battlecard || {};
               const links = lead.outreach_messages?.whatsapp_links || {};
               const briefingMd = lead.briefing_data?.briefing_md;
+              const currentTheme = lead.site_config?.theme || {};
 
               return (
                 <div
@@ -202,7 +256,7 @@ export default function AgencyDashboard() {
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
-                        {biz.address} • Tel: <strong>{biz.phone}</strong>
+                        Slug: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">/{lead.slug}</code> • Tel: <strong>{biz.phone}</strong>
                       </p>
                     </div>
 
@@ -214,7 +268,7 @@ export default function AgencyDashboard() {
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Ver Site Demo</span>
+                        <span>Abrir Site</span>
                       </a>
 
                       <a
@@ -240,6 +294,84 @@ export default function AgencyDashboard() {
                           </option>
                         ))}
                       </select>
+                    </div>
+                  </div>
+
+                  {/* NOVO BLOCO: Seletor Manual de Arquétipo, Paleta e Cor da Marca */}
+                  <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-indigo-950 uppercase tracking-wider">
+                      <Palette className="w-4 h-4 text-indigo-600" />
+                      <span>Estúdio Visual (1 Clique)</span>
+                      {savingThemeSlug === lead.slug && (
+                        <span className="text-[11px] font-semibold text-emerald-600 animate-pulse ml-2">
+                          • Salvando no Supabase...
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                      {/* Seletor de Arquétipo */}
+                      <div className="flex items-center gap-1.5">
+                        <Layout className="w-3.5 h-3.5 text-slate-500" />
+                        <select
+                          value={currentTheme.archetype || ''}
+                          onChange={(e) =>
+                            updateLeadTheme(lead, { archetype: e.target.value || null })
+                          }
+                          className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                        >
+                          {ARCHETYPE_OPTIONS.map((arch) => (
+                            <option key={arch.value} value={arch.value}>
+                              Layout: {arch.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Seletor de Paleta Pré-Definida */}
+                      <select
+                        value={currentTheme.palette_name || ''}
+                        onChange={(e) =>
+                          updateLeadTheme(lead, {
+                            palette_name: e.target.value || null,
+                            custom_hex: null, // Limpa cor customizada ao escolher paleta pronta
+                          })
+                        }
+                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                      >
+                        {PALETTE_OPTIONS.map((pal) => (
+                          <option key={pal.value} value={pal.value}>
+                            Cor: {pal.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Seletor de Cor Hexadecimal Livre (Para Logo do Cliente no Estrutura Pro) */}
+                      <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <span>Cor da Logo:</span>
+                        <input
+                          type="color"
+                          value={currentTheme.custom_hex || '#1D4ED8'}
+                          onChange={(e) =>
+                            updateLeadTheme(lead, {
+                              custom_hex: e.target.value,
+                            })
+                          }
+                          className="w-5 h-5 rounded cursor-pointer border-0 p-0"
+                        />
+                        {currentTheme.custom_hex && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              updateLeadTheme(lead, { custom_hex: null });
+                            }}
+                            className="text-[10px] text-rose-600 hover:underline ml-1"
+                          >
+                            Resetar
+                          </button>
+                        )}
+                      </label>
                     </div>
                   </div>
 
@@ -375,7 +507,7 @@ export default function AgencyDashboard() {
                     </div>
                   </div>
 
-                  {/* Gaveta: Rascunho de Proposta Comercial (3 Pacotes) */}
+                  {/* Gaveta: Rascunho de Proposta Comercial */}
                   {openProposalSlug === lead.slug && (
                     <div className="mt-4 bg-slate-900 text-slate-100 p-5 rounded-xl text-xs space-y-3">
                       <div className="flex items-center justify-between">
@@ -401,7 +533,7 @@ export default function AgencyDashboard() {
                     </div>
                   )}
 
-                  {/* Gaveta: Documento briefing.md Preenchido pelo Cliente */}
+                  {/* Gaveta: Documento briefing.md Preenchido */}
                   {openBriefingSlug === lead.slug && briefingMd && (
                     <div className="mt-4 bg-emerald-950 text-emerald-50 p-5 rounded-xl text-xs space-y-3">
                       <div className="flex items-center justify-between">
