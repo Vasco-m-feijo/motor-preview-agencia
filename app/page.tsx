@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   MessageCircle,
-  MapPin,
   Zap,
   ShieldCheck,
   ArrowRight,
@@ -13,7 +12,8 @@ import {
   ExternalLink,
   HelpCircle,
   Sparkles,
-  Star,
+  QrCode,
+  BarChart3,
 } from 'lucide-react';
 
 // Coloque aqui o seu número de WhatsApp comercial (55 + DDD + Número)
@@ -51,7 +51,7 @@ export default function AgencyHomePage() {
               Como funciona
             </a>
             <a href="#portfolio" className="hover:text-emerald-400 transition">
-              Portfólio & Caso Real
+              Portfólio & Demos ao Vivo
             </a>
             <a href="#pacotes" className="hover:text-emerald-400 transition">
               Pacotes
@@ -109,7 +109,7 @@ export default function AgencyHomePage() {
               href="#portfolio"
               className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 transition w-full sm:w-auto"
             >
-              <span>Ver Caso de Sucesso (FG Motors)</span>
+              <span>Navegar pelas Demos ao Vivo</span>
               <ArrowRight className="w-4 h-4" />
             </a>
           </div>
@@ -140,7 +140,7 @@ export default function AgencyHomePage() {
                 1. Ficha do Google Maps sem Site Oficial
               </h3>
               <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Quando o botão "Website" da sua ficha está vazio ou quebrado, o algoritmo do Google reduz seu alcance local e o cliente fica inseguro antes de chamar.
+                Quando o botão &ldquo;Website&rdquo; da sua ficha está vazio ou quebrado, o algoritmo do Google reduz seu alcance local e o cliente fica inseguro antes de chamar.
               </p>
             </div>
 
@@ -223,35 +223,35 @@ export default function AgencyHomePage() {
                 Atendimento Ágil & Automação no WhatsApp
               </h3>
               <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                Mensagens pré-preenchidas por tipo de serviço, rastreamento de cliques (GA4/GTM) e opção de triagem automatizada para sua equipe não perder tempo no balcão.
+                Assistente de pré-atendimento interativo, catálogo digital de serviços, link na bio com Placa QR Code de balcão e relatório mensal de cliques em tempo real.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. PORTFÓLIO SELECIONADO ("1 REAL + 2 CONCEITUAIS") */}
+      {/* 5. PORTFÓLIO SELECIONADO ("1 REAL + 2 CONCEITUAIS" COM LINKS DIRETOS) */}
       <section id="portfolio" className="py-16 md:py-24 bg-slate-900/40 border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-              Resultados Comprovados
+              Resultados Comprovados & Demos Interativas
             </span>
             <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-white">
               Projetos em Produção & Demonstrações por Nicho
             </h2>
             <p className="mt-3 text-slate-400 text-sm sm:text-base">
-              Conheça o estudo de caso real em Porto Alegre que deu origem à nossa metodologia e navegue pelas estruturas de outros segmentos:
+              Clique abaixo para navegar no estudo de caso real em Porto Alegre e testar ao vivo nossas 2 Demos Conceituais completas (com Site, Link na Bio, Placa QR Code e Relatório):
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* CASO REAL: FG MOTORS */}
+            {/* CARD 1: CASO REAL FG MOTORS + DEMO AUTOMOTIVA */}
             <div className="bg-slate-900 rounded-2xl border-2 border-emerald-500/60 p-6 flex flex-col justify-between shadow-lg">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-slate-950">
-                    ⭐ Caso de Estudo Real • Porto Alegre
+                    ⭐ Caso de Estudo Real • POA
                   </span>
                   <span className="text-xs text-slate-400">Setor Automotivo</span>
                 </div>
@@ -259,7 +259,7 @@ export default function AgencyHomePage() {
                   FG Motors Oficina Mecânica
                 </h3>
                 <p className="mt-2 text-sm text-slate-300 leading-relaxed">
-                  Profissionalização completa de oficina tradicional em Porto Alegre: recriação de identidade visual em alta definição, organização de tabelas de serviços, SEO Local no Google Maps e página rápida integrada ao WhatsApp.
+                  Profissionalização completa de oficina em Porto Alegre: identidade visual em alta definição, tabela de serviços, SEO Local no Google Maps e captação direta no WhatsApp.
                 </p>
                 <ul className="mt-4 space-y-2 text-xs text-slate-300">
                   <li className="flex items-center gap-2">
@@ -270,14 +270,10 @@ export default function AgencyHomePage() {
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>Rastreamento de conversões e cliques de orçamento</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Integração direta com Perfil da Empresa no Google</span>
-                  </li>
                 </ul>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 flex flex-col gap-2.5">
+              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2.5">
                 <a
                   href="https://fgmotorsoficina.com"
                   target="_blank"
@@ -288,96 +284,120 @@ export default function AgencyHomePage() {
                   <span>Visitar fgmotorsoficina.com</span>
                 </a>
                 <Link
-                  href="/carecar-auto-center"
+                  href="/mello-mechanic-service"
                   className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
                 >
-                  <span>Ver Demo Dinâmica Automotiva (Carecar)</span>
+                  <span>Ver Demo Dark Carbono (Oficina)</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
-            {/* DEMO CONCEITUAL 1: SAÚDE E BELEZA */}
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between">
+            {/* CARD 2: DEMO CONCEITUAL 1 — SAÚDE E BELEZA (LUMINA ODONTO) */}
+            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between hover:border-sky-500/50 transition">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30">
-                    Modelo Saúde & Estética
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30">
+                    Demo 1 • Saúde & Estética
                   </span>
-                  <span className="text-xs text-slate-400">Clínicas / Consultórios</span>
+                  <span className="text-xs text-slate-400">Editorial Clean</span>
                 </div>
                 <h3 className="text-xl font-bold text-white">
-                  Clínicas Odontológicas & Estética Avançada
+                  Lumina Odontologia & Harmonização
                 </h3>
                 <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                  Estrutura clean em tons claros projetada para transmitir autoridade médica, apresentar tratamentos de maior margem (implantes, lentes, harmonização) e converter pacientes em agendamentos de avaliação no WhatsApp.
+                  Arquétipo Editorial Clean em Azul Oceano projetado para clínicas médicas, consultórios odontológicos e estética avançada. Inclui catálogo de tratamentos e triagem sem fila.
                 </p>
                 <ul className="mt-4 space-y-2 text-xs text-slate-400">
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                    <span>Botões de agendamento separados por especialidade</span>
+                    <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span>Menu flutuante em pílula + Simulação Digital 3D</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                    <span>Destaque para avaliações 5 estrelas verificadas</span>
+                    <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span>Assistente de Pré-Atendimento e Tabela de Tratamentos</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800">
-                <a
-                  href={makeAgencyWaLink(
-                    'Olá! Tenho uma clínica/estética e gostaria de ver uma prévia personalizada para o meu espaço.'
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-white transition"
+              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2.5">
+                <Link
+                  href="/lumina-odontologia-estetica"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-extrabold text-xs bg-sky-500 hover:bg-sky-400 text-slate-950 transition shadow-md"
                 >
-                  <MessageCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Pedir Demo para Minha Clínica</span>
-                </a>
+                  <span>Abrir Demo: Lumina Odontologia</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/lumina-odontologia-estetica/bio"
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Link Bio + QR</span>
+                  </Link>
+                  <Link
+                    href="/lumina-odontologia-estetica/relatorio"
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Ver Relatório</span>
+                  </Link>
+                </div>
               </div>
             </div>
 
-            {/* DEMO CONCEITUAL 2: PET & GASTRONOMIA / SERVIÇOS */}
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between">
+            {/* CARD 3: DEMO CONCEITUAL 2 — PET & SERVIÇOS (VILA PET) */}
+            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between hover:border-emerald-500/50 transition">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                    Modelo Pet, Gastronomia & Serviços
+                    Demo 2 • Pet & Serviços Locais
                   </span>
-                  <span className="text-xs text-slate-400">Comércio Local</span>
+                  <span className="text-xs text-slate-400">Bento Grid</span>
                 </div>
                 <h3 className="text-xl font-bold text-white">
-                  Clínicas Veterinárias, Pet Shops & Cafeterias
+                  Vila Pet Veterinária & Estética
                 </h3>
                 <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                  Layout vibrante focado em conveniência no bairro: catálogo visual de serviços/produtos, rota em 1 clique no Google Maps, horários de plantão e contato imediato pelo celular.
+                  Arquétipo Bento Grid Assimétrico em Verde Esmeralda e Fundo Areia: catálogo interativo de Banho & Tosa e vacinas, horários de plantão e rota rápida no Google Maps.
                 </p>
                 <ul className="mt-4 space-y-2 text-xs text-slate-400">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Catálogo ágil e botão "Como Chegar" em destaque</span>
+                    <span>Catálogo digital com busca e preços de referência</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>FAQ estratégico para reduzir dúvidas repetitivas</span>
+                    <span>Triagem rápida por nome/porte do Pet no WhatsApp</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800">
-                <a
-                  href={makeAgencyWaLink(
-                    'Olá! Gostaria de receber uma demonstração gratuita do site para o meu comércio.'
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-white transition"
+              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2.5">
+                <Link
+                  href="/vila-pet-veterinaria"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-extrabold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 transition shadow-md"
                 >
-                  <MessageCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Pedir Demo para Meu Comércio</span>
-                </a>
+                  <span>Abrir Demo: Vila Pet Veterinária</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/vila-pet-veterinaria/bio"
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Link Bio + QR</span>
+                  </Link>
+                  <Link
+                    href="/vila-pet-veterinaria/relatorio"
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Ver Relatório</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -424,11 +444,11 @@ export default function AgencyHomePage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Link e QR Code de balcão para coleta de novas avaliações</span>
+                  <span>Link e Placa QR Code de balcão para coleta de avaliações</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Página rápida de "Link na Bio" otimizada</span>
+                  <span>Página rápida de &ldquo;Link na Bio&rdquo; otimizada</span>
                 </li>
               </ul>
             </div>
@@ -586,7 +606,7 @@ export default function AgencyHomePage() {
               3. Como eu sei se o site realmente está trazendo clientes?
             </h3>
             <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-              Todos os botões da sua página possuem rastreamento de conversão e mensagens personalizadas (ex: "Olá! Vi o site da empresa e quero orçamento para Revisão"). Você sabe imediatamente no seu WhatsApp que o cliente veio pela página.
+              Todos os botões da sua página possuem rastreamento de conversão e um painel de Relatório Mensal em tempo real. Você sabe exatamente quantos cliques de orçamento e quantas rotas no Google Maps a página gerou.
             </p>
           </div>
         </div>
@@ -602,7 +622,7 @@ export default function AgencyHomePage() {
             <Link href="/painel" className="text-slate-600 hover:text-slate-400 transition">
               Painel Operacional (SDR)
             </Link>
-            <span><span>© 2026</span></span>
+            <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
       </footer>
