@@ -622,7 +622,7 @@ export default function AgencyHomePage() {
             <Link href="/painel" className="text-slate-600 hover:text-slate-400 transition">
               Painel Operacional (SDR)
             </Link>
-            <span>© {new Date().getFullYear()}</span>
+            <span>© 2026</span>
           </div>
         </div>
       </footer>
