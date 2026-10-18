@@ -20,6 +20,10 @@ import {
   MousePointerClick,
   Globe,
   Save,
+  BarChart3,
+  Tag,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 const supabase = createClient(
@@ -64,21 +68,25 @@ export default function AgencyDashboard() {
   const [openBriefingSlug, setOpenBriefingSlug] = useState<string | null>(null);
   const [openProposalSlug, setOpenProposalSlug] = useState<string | null>(null);
   const [openProConfigSlug, setOpenProConfigSlug] = useState<string | null>(null);
+  const [openEcoConfigSlug, setOpenEcoConfigSlug] = useState<string | null>(null);
   const [savingThemeSlug, setSavingThemeSlug] = useState<string | null>(null);
 
-  // Estado temporário para edição da gaveta "Estrutura Pro"
-  const [proForm, setProForm] = useState<{
-    custom_domain: string;
-    logo_url: string;
-    hero_image_url: string;
-    google_review_url: string;
-    ga4_id: string;
-  }>({
+  const [proForm, setProForm] = useState({
     custom_domain: '',
     logo_url: '',
     hero_image_url: '',
     google_review_url: '',
     ga4_id: '',
+  });
+
+  const [ecoForm, setEcoForm] = useState<{
+    triage_enabled: boolean;
+    custom_question: string;
+    catalog: Array<{ title: string; price: string; category: string; description: string }>;
+  }>({
+    triage_enabled: true,
+    custom_question: 'Algum detalhe adicional? (Ex: modelo do veículo ou dúvida)',
+    catalog: [],
   });
 
   async function fetchLeads() {
@@ -92,7 +100,6 @@ export default function AgencyDashboard() {
       setLeads(data);
     }
 
-    // Busca contagem de cliques rastreados por cliente
     const { data: clicks } = await supabase
       .from('click_events')
       .select('slug');
@@ -127,14 +134,12 @@ export default function AgencyDashboard() {
     const currentConfig = lead.site_config || {};
     const currentTheme = currentConfig.theme || {};
 
-    const updatedTheme = {
-      ...currentTheme,
-      ...updates,
-    };
-
     const updatedSiteConfig = {
       ...currentConfig,
-      theme: updatedTheme,
+      theme: {
+        ...currentTheme,
+        ...updates,
+      },
     };
 
     setLeads((prev) =>
@@ -156,6 +161,7 @@ export default function AgencyDashboard() {
       setOpenProConfigSlug(null);
       return;
     }
+    setOpenEcoConfigSlug(null);
     const brand = lead.site_config?.brand || {};
     setProForm({
       custom_domain: lead.custom_domain || '',
@@ -165,6 +171,24 @@ export default function AgencyDashboard() {
       ga4_id: brand.ga4_id || '',
     });
     setOpenProConfigSlug(lead.slug);
+  }
+
+  function toggleEcoConfigDrawer(lead: any) {
+    if (openEcoConfigSlug === lead.slug) {
+      setOpenEcoConfigSlug(null);
+      return;
+    }
+    setOpenProConfigSlug(null);
+    const triage = lead.site_config?.triage || {};
+    const catalog = lead.site_config?.catalog || [];
+    setEcoForm({
+      triage_enabled: triage.enabled !== false,
+      custom_question:
+        triage.custom_question ||
+        'Algum detalhe adicional? (Ex: modelo do veículo ou procedimento)',
+      catalog: Array.isArray(catalog) ? catalog : [],
+    });
+    setOpenEcoConfigSlug(lead.slug);
   }
 
   async function saveProConfig(lead: any) {
@@ -209,7 +233,34 @@ export default function AgencyDashboard() {
     );
 
     setSavingThemeSlug(null);
-    alert('Configurações do Pacote Estrutura Pro salvas com sucesso!');
+    alert('Configurações do Pacote Estrutura Pro salvas!');
+  }
+
+  async function saveEcoConfig(lead: any) {
+    setSavingThemeSlug(lead.slug);
+    const currentConfig = lead.site_config || {};
+    const updatedSiteConfig = {
+      ...currentConfig,
+      triage: {
+        enabled: ecoForm.triage_enabled,
+        custom_question: ecoForm.custom_question.trim(),
+      },
+      catalog: ecoForm.catalog.filter((item) => item.title.trim() !== ''),
+    };
+
+    await supabase
+      .from('leads_pipeline')
+      .update({ site_config: updatedSiteConfig })
+      .eq('slug', lead.slug);
+
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.slug === lead.slug ? { ...l, site_config: updatedSiteConfig } : l
+      )
+    );
+
+    setSavingThemeSlug(null);
+    alert('Catálogo Digital e Triagem de WhatsApp salvos com sucesso!');
   }
 
   function handleOneClickClose(lead: any) {
@@ -243,7 +294,8 @@ export default function AgencyDashboard() {
 🔍 *Diagnóstico Atual:* ${biz.diagnosis || 'Ausência de site oficial vinculado ao Google Maps'}
 ⭐ *Reputação Verificada:* Nota ${biz.rating} (${biz.reviews_count} avaliações no Google)
 🔗 *Prévia Exclusiva:* ${origin}/${lead.slug}
-📲 *Prévia Link na Bio + QR Code:* ${origin}/${lead.slug}/bio
+📲 *Link na Bio + Placa QR Code:* ${origin}/${lead.slug}/bio
+📊 *Painel de Relatório Mensal:* ${origin}/${lead.slug}/relatorio
 
 ---
 📦 *OPÇÕES DE PACOTES:*
@@ -261,8 +313,8 @@ export default function AgencyDashboard() {
 
 *3. Ecossistema & Automação (Premium)*
 • Tudo do pacote Estrutura Pro
-• Automação de triagem e pré-atendimento no WhatsApp
-• Catálogo digital de serviços gerenciável + Relatório mensal de cliques
+• Assistente de Triagem e Pré-Atendimento Automático para WhatsApp
+• Catálogo Digital / Tabela de Preços Gerenciável + Relatório Mensal de Cliques
 
 💡 *Recomendação Estratégica:* ${bc.pacote_recomendado || '2. Estrutura Pro'}`;
   }
@@ -280,13 +332,13 @@ export default function AgencyDashboard() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold mb-2 border border-emerald-500/30">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Fábrica Autônoma • Central SDR & Entregas Estrutura Pro</span>
+              <span>Fábrica Autônoma • Central Completa (3 Pacotes Ativos)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
-              Pipeline de Leads & Customização Visual
+              Pipeline de Leads, Estúdio Visual & Automação
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Gerencie abordagens, troque arquétipo/cor em 1 clique, gere Placas QR Code e configure Domínio Próprio (.com.br).
+              Gerencie os pacotes Presença Local, Estrutura Pro e Ecossistema & Automação em uma única tela.
             </p>
           </div>
 
@@ -339,7 +391,7 @@ export default function AgencyDashboard() {
                   key={lead.id || lead.slug}
                   className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-6 space-y-5"
                 >
-                  {/* Linha 1: Nome, Nota, Cliques Rastreados e Atalhos */}
+                  {/* Linha 1: Nome, Nota, Cliques e Atalhos dos 3 Pacotes */}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                       <div className="flex items-center gap-2.5 flex-wrap">
@@ -352,7 +404,7 @@ export default function AgencyDashboard() {
                         </span>
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <MousePointerClick className="w-3.5 h-3.5" />
-                          {totalClicks} cliques rastreados
+                          {totalClicks} cliques
                         </span>
                         {lead.custom_domain && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -374,7 +426,7 @@ export default function AgencyDashboard() {
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Abrir Site</span>
+                        <span>Site</span>
                       </a>
 
                       <a
@@ -384,17 +436,17 @@ export default function AgencyDashboard() {
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 transition"
                       >
                         <QrCode className="w-3.5 h-3.5" />
-                        <span>Link Bio + Placa QR</span>
+                        <span>Bio + QR</span>
                       </a>
 
                       <a
-                        href={`/onboarding/${lead.slug}`}
+                        href={`/${lead.slug}/relatorio`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition"
                       >
-                        <ClipboardCheck className="w-3.5 h-3.5" />
-                        <span>Onboarding</span>
+                        <BarChart3 className="w-3.5 h-3.5" />
+                        <span>Relatório</span>
                       </a>
 
                       <button
@@ -405,23 +457,31 @@ export default function AgencyDashboard() {
                         <span>Estrutura Pro</span>
                       </button>
 
+                      <button
+                        onClick={() => toggleEcoConfigDrawer(lead)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition cursor-pointer"
+                      >
+                        <Tag className="w-3.5 h-3.5" />
+                        <span>Ecossistema & Catálogo</span>
+                      </button>
+
                       <select
                         value={lead.status || 'Novo'}
                         onChange={(e) =>
                           updateLeadStatus(lead.slug, e.target.value)
                         }
-                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800"
+                        className="rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-800"
                       >
                         {STATUS_OPTIONS.map((st) => (
                           <option key={st} value={st}>
-                            Status: {st}
+                            {st}
                           </option>
                         ))}
                       </select>
                     </div>
                   </div>
 
-                  {/* Barra de Estúdio Visual (Arquétipo e Cores em 1 Clique) */}
+                  {/* Barra de Estúdio Visual */}
                   <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-2 text-xs font-extrabold text-indigo-950 uppercase tracking-wider">
                       <Palette className="w-4 h-4 text-indigo-600" />
@@ -480,29 +540,17 @@ export default function AgencyDashboard() {
                           }
                           className="w-5 h-5 rounded cursor-pointer border-0 p-0"
                         />
-                        {currentTheme.custom_hex && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              updateLeadTheme(lead, { custom_hex: null });
-                            }}
-                            className="text-[10px] text-rose-600 hover:underline ml-1"
-                          >
-                            Resetar
-                          </button>
-                        )}
                       </label>
                     </div>
                   </div>
 
-                  {/* GAVETA: CONFIGURAÇÃO DO PACOTE ESTRUTURA PRO */}
+                  {/* GAVETA 1: CONFIGURAÇÃO DO PACOTE ESTRUTURA PRO */}
                   {openProConfigSlug === lead.slug && (
                     <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-4 border border-slate-800">
                       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                         <div>
                           <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-400">
-                            ⚙️ Entrega Técnica • Pacote Estrutura Pro
+                            ⚙️ Entrega Técnica • Pacote 2: Estrutura Pro
                           </span>
                           <h3 className="text-base font-bold mt-0.5">
                             Domínio Próprio (.com.br), Logo Oficial, Foto de Capa & GA4
@@ -595,6 +643,165 @@ export default function AgencyDashboard() {
                             className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-white"
                           />
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* GAVETA 2: CONFIGURAÇÃO DO PACOTE ECOSSISTEMA & AUTOMAÇÃO */}
+                  {openEcoConfigSlug === lead.slug && (
+                    <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-5 border border-slate-800">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-amber-400">
+                            🚀 Entrega Técnica • Pacote 3: Ecossistema & Automação
+                          </span>
+                          <h3 className="text-base font-bold mt-0.5">
+                            Assistente de Triagem no WhatsApp & Catálogo Digital de Preços
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => saveEcoConfig(lead)}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs cursor-pointer"
+                        >
+                          <Save className="w-4 h-4" />
+                          <span>Salvar Ecossistema</span>
+                        </button>
+                      </div>
+
+                      {/* Controle da Triagem */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <div className="md:col-span-4 flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={ecoForm.triage_enabled}
+                            onChange={(e) =>
+                              setEcoForm({
+                                ...ecoForm,
+                                triage_enabled: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded cursor-pointer"
+                          />
+                          <span className="font-bold text-white">
+                            Ativar Assistente de Pré-Atendimento no Site
+                          </span>
+                        </div>
+                        <div className="md:col-span-8">
+                          <label className="font-bold text-slate-400 block mb-1">
+                            Pergunta Personalizada do Pré-Atendimento:
+                          </label>
+                          <input
+                            type="text"
+                            value={ecoForm.custom_question}
+                            onChange={(e) =>
+                              setEcoForm({
+                                ...ecoForm,
+                                custom_question: e.target.value,
+                              })
+                            }
+                            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Editor do Catálogo / Tabela de Preços */}
+                      <div className="space-y-3 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-300 uppercase">
+                            Itens do Catálogo Digital / Tabela de Preços ({ecoForm.catalog.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEcoForm({
+                                ...ecoForm,
+                                catalog: [
+                                  ...ecoForm.catalog,
+                                  {
+                                    title: '',
+                                    price: 'A partir de R$ ',
+                                    category: 'Serviço',
+                                    description: '',
+                                  },
+                                ],
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Adicionar Item ao Catálogo</span>
+                          </button>
+                        </div>
+
+                        {ecoForm.catalog.length === 0 ? (
+                          <p className="text-slate-400 py-3">
+                            Nenhum item cadastrado na tabela de preços ainda. Clique em &ldquo;Adicionar Item ao Catálogo&rdquo; para criar.
+                          </p>
+                        ) : (
+                          <div className="space-y-2.5">
+                            {ecoForm.catalog.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="grid grid-cols-1 md:grid-cols-12 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 items-center"
+                              >
+                                <input
+                                  type="text"
+                                  placeholder="Categoria (ex: Revisão)"
+                                  value={item.category}
+                                  onChange={(e) => {
+                                    const next = [...ecoForm.catalog];
+                                    next[idx].category = e.target.value;
+                                    setEcoForm({ ...ecoForm, catalog: next });
+                                  }}
+                                  className="md:col-span-2 rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-2 text-white"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Nome do Serviço / Produto"
+                                  value={item.title}
+                                  onChange={(e) => {
+                                    const next = [...ecoForm.catalog];
+                                    next[idx].title = e.target.value;
+                                    setEcoForm({ ...ecoForm, catalog: next });
+                                  }}
+                                  className="md:col-span-3 rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-2 text-white"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Preço (ex: R$ 180 ou Sob consulta)"
+                                  value={item.price}
+                                  onChange={(e) => {
+                                    const next = [...ecoForm.catalog];
+                                    next[idx].price = e.target.value;
+                                    setEcoForm({ ...ecoForm, catalog: next });
+                                  }}
+                                  className="md:col-span-3 rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-2 text-emerald-400 font-bold"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Descrição curta"
+                                  value={item.description}
+                                  onChange={(e) => {
+                                    const next = [...ecoForm.catalog];
+                                    next[idx].description = e.target.value;
+                                    setEcoForm({ ...ecoForm, catalog: next });
+                                  }}
+                                  className="md:col-span-3 rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-2 text-white"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const next = ecoForm.catalog.filter((_, i) => i !== idx);
+                                    setEcoForm({ ...ecoForm, catalog: next });
+                                  }}
+                                  className="md:col-span-1 flex items-center justify-center p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -717,7 +924,7 @@ export default function AgencyDashboard() {
                           className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition cursor-pointer"
                         >
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>Ver briefing.md Preenchido</span>
+                          <span>Ver briefing.md</span>
                         </button>
                       )}
 
@@ -743,7 +950,7 @@ export default function AgencyDashboard() {
                             navigator.clipboard.writeText(
                               generateProposalText(lead)
                             );
-                            alert('Proposta copiada para a área de transferência!');
+                            alert('Proposta copiada!');
                           }}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold cursor-pointer"
                         >

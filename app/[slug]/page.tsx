@@ -1,3 +1,4 @@
+import EcosystemWidgets from '../../components/EcosystemWidgets';
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -681,6 +682,18 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
           </div>
         )}
       </section>
+
+      {/* 3.5. PACOTE ECOSSISTEMA & AUTOMAÇÃO: CATÁLOGO GERENCIÁVEL + TRIAGEM WHATSAPP */}
+      <EcosystemWidgets
+        slug={slug}
+        displayName={displayName}
+        phone={answers.q2_phone || biz.phone || ''}
+        isDark={isDark}
+        isIndustrial={isIndustrial}
+        services={services}
+        catalog={config.catalog || []}
+        triageConfig={config.triage}
+      />
 
       {/* 4. DIFERENCIAIS COMPETITIVOS */}
       <section
