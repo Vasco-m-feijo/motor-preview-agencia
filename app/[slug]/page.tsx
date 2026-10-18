@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { Phone, MapPin, Star, Clock, CheckCircle2, MessageCircle, HelpCircle, ExternalLink, ShieldCheck, Sparkles } from 'lucide-react';
+import { Phone, MapPin, Star, Clock, MessageCircle, HelpCircle, ExternalLink, ShieldCheck, Sparkles } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,14 +10,13 @@ const supabase = createClient(
 
 export const instant = false;
 
-// Paletas automáticas de fallback para garantir que nenhum lead fique com a mesma cara
 const AUTO_THEMES = [
-  { primary: '#DC2626', accent: '#16A34A', surface: '#FEF2F2', style: 'dark-premium' },     // Vermelho + Dark
-  { primary: '#1D4ED8', accent: '#25D366', surface: '#EFF6FF', style: 'immersive-brand' },  // Azul Royal Imersivo
-  { primary: '#D97706', accent: '#15803D', surface: '#FFFBEB', style: 'split-modern' },     // Âmbar / Ouro
-  { primary: '#047857', accent: '#2563EB', surface: '#ECFDF5', style: 'immersive-brand' },  // Verde Esmeralda
-  { primary: '#4338CA', accent: '#16A34A', surface: '#EEF2FF', style: 'split-modern' },     // Índigo Moderno
-  { primary: '#BE123C', accent: '#15803D', surface: '#FFF1F2', style: 'dark-premium' },     // Carmim Premium
+  { primary: '#DC2626', accent: '#16A34A', surface: '#FEF2F2', style: 'dark-premium' },
+  { primary: '#1D4ED8', accent: '#25D366', surface: '#EFF6FF', style: 'immersive-brand' },
+  { primary: '#D97706', accent: '#15803D', surface: '#FFFBEB', style: 'split-modern' },
+  { primary: '#047857', accent: '#2563EB', surface: '#ECFDF5', style: 'immersive-brand' },
+  { primary: '#4338CA', accent: '#16A34A', surface: '#EEF2FF', style: 'split-modern' },
+  { primary: '#BE123C', accent: '#15803D', surface: '#FFF1F2', style: 'dark-premium' },
 ];
 
 function getDynamicTheme(slug: string, savedTheme: any) {
@@ -26,8 +25,6 @@ function getDynamicTheme(slug: string, savedTheme: any) {
     hash = slug.charCodeAt(i) + ((hash << 5) - hash);
   }
   const fallback = AUTO_THEMES[Math.abs(hash) % AUTO_THEMES.length];
-
-  // Se o tema salvo no banco ainda for o #1E3A8A padrão, usa a paleta exclusiva gerada pelo slug
   const isDefaultBlue = !savedTheme?.color_primary || savedTheme.color_primary.toUpperCase() === '#1E3A8A';
 
   return {
@@ -56,13 +53,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!lead) return { title: 'Página não encontrada' };
 
   const seo = lead.site_config?.seo || {};
-  const name = lead.business_data?.name || 'Empresa Local';
+  const officialName = lead.briefing_data?.answers?.q1_name || lead.business_data?.name || 'Empresa Local';
 
   return {
-    title: seo.title || name,
-    description: seo.meta_description || `Conheça ${name}. Solicite atendimento rápido pelo WhatsApp.`,
+    title: seo.title || officialName,
+    description: seo.meta_description || `Conheça ${officialName}. Solicite atendimento rápido pelo WhatsApp.`,
     openGraph: {
-      title: seo.title || name,
+      title: seo.title || officialName,
       description: seo.meta_description || `Atendimento rápido pelo WhatsApp.`,
       type: 'website',
     },
@@ -77,7 +74,17 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
     notFound();
   }
 
-  const { business_data: biz, site_config: config } = lead;
+  const { business_data: biz, site_config: config, briefing_data: briefing } = lead;
+  const answers = briefing?.answers || {};
+
+  // Prioriza os dados revisados pelo cliente no Onboarding (Etapa 2 do POP)
+  const displayName = answers.q1_name || biz.name;
+  const displayShortName = answers.q1_name || biz.short_name || biz.name;
+  const displayCnpj = answers.q1_cnpj || null;
+  const displayAddress = answers.q1_address || config.location?.address || biz.address;
+  const cleanPhone = (answers.q2_phone || biz.phone || '').toString().replace(/\D/g, '');
+  const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+
   const activeTheme = getDynamicTheme(slug, config.theme);
   const hero = config.hero || {};
   const services = config.services || [];
@@ -86,6 +93,15 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
   const location = config.location || {};
   const faq = config.faq || [];
   const jsonLd = config.seo?.json_ld || {};
+
+  const heroWaUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
+    hero.cta_whatsapp_text || `Olá! Vi o site da ${displayShortName} e gostaria de solicitar um orçamento.`
+  )}`;
+
+  // Se o cliente editou os horários no Onboarding, separa por "|" ou linha
+  const openingHoursList = answers.q2_hours
+    ? answers.q2_hours.split('|').map((s: string) => s.trim()).filter(Boolean)
+    : location.opening_hours || [];
 
   const customThemeStyles = {
     '--color-primary': activeTheme.primary,
@@ -108,7 +124,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* TOP BAR DE DESTAQUE NA COR DA MARCA */}
+      {/* TOP BAR */}
       <div className="bg-[var(--color-primary)] text-white text-xs py-2 px-4 text-center font-medium">
         <span>⭐ Avaliado com nota {biz.rating} ({biz.reviews_count} avaliações no Google) • Atendimento rápido via WhatsApp</span>
       </div>
@@ -118,18 +134,18 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 truncate max-w-[230px] sm:max-w-xs">
             <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] text-white font-extrabold flex items-center justify-center shrink-0 shadow-xs">
-              {(biz.short_name || biz.name || 'E').charAt(0).toUpperCase()}
+              {(displayShortName || 'E').charAt(0).toUpperCase()}
             </div>
             <span className="font-extrabold text-lg md:text-xl text-slate-900 truncate">
-              {biz.short_name || biz.name}
+              {displayShortName}
             </span>
           </div>
           <div className="hidden md:flex items-center gap-2 text-xs text-slate-600 max-w-md truncate">
             <MapPin className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
-            <span className="truncate">{biz.address}</span>
+            <span className="truncate">{displayAddress}</span>
           </div>
           <a
-            href={hero.cta_whatsapp_url}
+            href={heroWaUrl}
             target="_blank"
             rel="noopener noreferrer"
             data-track="whatsapp-click"
@@ -142,7 +158,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </div>
       </header>
 
-      {/* 2. HERO SECTION COM 3 VARIAÇÕES DE LAYOUT E COR */}
+      {/* 2. HERO SECTION */}
       <section
         className={`relative overflow-hidden border-b border-slate-200/80 py-14 md:py-24 ${
           isDarkHero
@@ -175,12 +191,12 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
                   isSplitHero ? '' : 'mx-auto'
                 } ${isDarkHero || isBrandHero ? 'text-white/85' : 'text-slate-600'}`}
               >
-                {hero.subheadline}
+                {answers.q5_differentiator || hero.subheadline}
               </p>
 
               <div className={`mt-8 flex flex-col sm:flex-row items-center gap-4 ${isSplitHero ? '' : 'justify-center'}`}>
                 <a
-                  href={hero.cta_whatsapp_url}
+                  href={heroWaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-track="whatsapp-click"
@@ -193,7 +209,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* Card de Prova Social Lateral (Modo Split) ou Centralizado */}
             <div className={isSplitHero ? 'lg:col-span-5' : 'mt-8 flex justify-center'}>
               <div
                 className={`rounded-2xl p-6 border ${
@@ -235,40 +250,45 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {services.map((srv: any, idx: number) => (
-            <div
-              key={idx}
-              className="bg-white rounded-2xl p-6 border border-slate-200 border-t-4 border-t-[var(--color-primary)] shadow-xs flex flex-col justify-between hover:shadow-md transition"
-            >
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-primary)] font-extrabold mb-4">
-                  0{idx + 1}
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">{srv.title}</h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">{srv.description}</p>
-              </div>
-
-              <a
-                href={srv.whatsapp_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-track="whatsapp-click"
-                data-location={`service-card-${idx + 1}`}
-                className="mt-6 inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-[var(--color-primary)] hover:opacity-90 transition"
+          {services.map((srv: any, idx: number) => {
+            const srvWaUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
+              srv.whatsapp_text || `Olá! Gostaria de saber mais sobre ${srv.title}.`
+            )}`;
+            return (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl p-6 border border-slate-200 border-t-4 border-t-[var(--color-primary)] shadow-xs flex flex-col justify-between hover:shadow-md transition"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>{srv.cta_text || 'Consultar no WhatsApp'}</span>
-              </a>
-            </div>
-          ))}
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-primary)] font-extrabold mb-4">
+                    0{idx + 1}
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">{srv.title}</h3>
+                  <p className="mt-2 text-sm text-slate-600 leading-relaxed">{srv.description}</p>
+                </div>
+
+                <a
+                  href={srvWaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-track="whatsapp-click"
+                  data-location={`service-card-${idx + 1}`}
+                  className="mt-6 inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-[var(--color-primary)] hover:opacity-90 transition"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{srv.cta_text || 'Consultar no WhatsApp'}</span>
+                </a>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* 4. TRUST SECTION (Diferenciais) */}
+      {/* 4. TRUST SECTION */}
       <section className="py-14 md:py-20 bg-[var(--color-surface)] border-y border-slate-200">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-slate-900 max-w-2xl mx-auto mb-12">
-            {differentials.section_title || `Por que escolher a ${biz.short_name || biz.name}?`}
+            {differentials.section_title || `Por que escolher a ${displayShortName}?`}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -351,7 +371,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
               <MapPin className="w-5 h-5 text-[var(--color-primary)]" />
               <span>Endereço e Localização</span>
             </h2>
-            <p className="text-slate-700 text-sm leading-relaxed mb-6">{location.address}</p>
+            <p className="text-slate-700 text-sm leading-relaxed mb-6">{displayAddress}</p>
 
             {location.maps_url && (
               <a
@@ -373,9 +393,9 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
               <Clock className="w-5 h-5 text-[var(--color-primary)]" />
               <span>Horário de Funcionamento</span>
             </h2>
-            {(location.opening_hours || []).length > 0 ? (
+            {openingHoursList.length > 0 ? (
               <ul className="space-y-2 text-sm text-slate-600">
-                {location.opening_hours.map((line: string, idx: number) => (
+                {openingHoursList.map((line: string, idx: number) => (
                   <li key={idx} className="border-b border-slate-100 pb-1.5 last:border-0">
                     {line}
                   </li>
@@ -391,8 +411,9 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
       {/* 8. FOOTER */}
       <footer className="bg-slate-950 text-slate-400 py-10 text-center text-xs">
         <div className="max-w-6xl mx-auto px-4">
-          <p className="font-bold text-white text-sm mb-1">{biz.name}</p>
-          <p>{biz.address}</p>
+          <p className="font-bold text-white text-sm mb-1">{displayName}</p>
+          {displayCnpj && <p className="text-slate-400 mb-1">CNPJ: {displayCnpj}</p>}
+          <p>{displayAddress}</p>
           <p className="mt-4 text-slate-500">
             © {new Date().getFullYear()} • Todos os direitos reservados.
           </p>
@@ -402,7 +423,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
       {/* BARRA INFERIOR FIXA MOBILE */}
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur border-t border-slate-200 md:hidden z-50">
         <a
-          href={hero.cta_whatsapp_url}
+          href={heroWaUrl}
           target="_blank"
           rel="noopener noreferrer"
           data-track="whatsapp-click"
