@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
   MessageCircle,
   MapPin,
   Star,
-  Clock,
   QrCode,
   Printer,
   ArrowLeft,
@@ -22,7 +21,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function BioAndQrPage() {
+function BioAndQrContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = params?.slug as string;
@@ -85,20 +84,22 @@ export default function BioAndQrPage() {
     `Olá! Vim pelo Link da Bio da ${displayName} e gostaria de atendimento.`
   )}`;
 
-  // Link de avaliação no Google (usa o link específico se cadastrado ou o link da ficha no Google Maps)
-  const reviewUrl = brand.google_review_url || config.location?.maps_url || biz.maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayName + ' ' + displayAddress)}`;
+  const reviewUrl =
+    brand.google_review_url ||
+    config.location?.maps_url ||
+    biz.maps_url ||
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      displayName + ' ' + displayAddress
+    )}`;
 
   const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(
     reviewUrl
   )}`;
 
-  // =========================================================================
-  // MODO 2: PLACA QR CODE DE BALCÃO PARA IMPRESSÃO (Coleta de Avaliações)
-  // =========================================================================
+  // MODO 2: PLACA QR CODE DE BALCÃO PARA IMPRESSÃO
   if (showQrStand) {
     return (
       <div className="min-h-screen bg-slate-200 py-8 px-4 flex flex-col items-center justify-center print:bg-white print:p-0">
-        {/* Barra de controle (some na impressão) */}
         <div className="max-w-md w-full mb-4 flex items-center justify-between print:hidden">
           <button
             onClick={() => setShowQrStand(false)}
@@ -117,7 +118,6 @@ export default function BioAndQrPage() {
           </button>
         </div>
 
-        {/* Display de Balcão A5 */}
         <div
           style={{ '--color-primary': primaryColor } as React.CSSProperties}
           className="bg-white max-w-md w-full rounded-3xl border-4 border-slate-900 p-8 text-center shadow-2xl print:shadow-none print:border-2"
@@ -155,7 +155,6 @@ export default function BioAndQrPage() {
             </p>
           </div>
 
-          {/* QR Code Central */}
           <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-slate-300 inline-block mx-auto">
             <img
               src={qrCodeImageUrl}
@@ -175,9 +174,7 @@ export default function BioAndQrPage() {
     );
   }
 
-  // =========================================================================
   // MODO 1: PÁGINA "LINK NA BIO" OTIMIZADA PARA INSTAGRAM
-  // =========================================================================
   return (
     <div
       style={{ '--color-primary': primaryColor } as React.CSSProperties}
@@ -186,7 +183,6 @@ export default function BioAndQrPage() {
       <ClickTracker slug={slug} ga4Id={brand.ga4_id} />
 
       <div className="max-w-md w-full space-y-6">
-        {/* Topo do Perfil */}
         <div className="text-center space-y-3">
           {logoUrl ? (
             <img
@@ -211,7 +207,6 @@ export default function BioAndQrPage() {
           </div>
         </div>
 
-        {/* Botão Principal: WhatsApp Direto */}
         <div className="space-y-3">
           <a
             href={mainWaUrl}
@@ -225,7 +220,6 @@ export default function BioAndQrPage() {
             <span>Chamar no WhatsApp Agora</span>
           </a>
 
-          {/* Botão: Avaliar no Google */}
           <a
             href={reviewUrl}
             target="_blank"
@@ -238,7 +232,6 @@ export default function BioAndQrPage() {
             <span>Avaliar Nosso Atendimento no Google</span>
           </a>
 
-          {/* Botão: Ver Site Completo */}
           <a
             href={`/${slug}`}
             className="flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-2xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 transition"
@@ -248,7 +241,6 @@ export default function BioAndQrPage() {
           </a>
         </div>
 
-        {/* Atalhos Rápidos dos Serviços Principais */}
         {(config.services || []).length > 0 && (
           <div className="pt-2 space-y-2.5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">
@@ -279,7 +271,6 @@ export default function BioAndQrPage() {
           </div>
         )}
 
-        {/* Localização e Rota */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3 text-xs">
           <div className="flex items-start gap-2.5 text-slate-300">
             <MapPin className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-0.5" />
@@ -299,7 +290,6 @@ export default function BioAndQrPage() {
         </div>
       </div>
 
-      {/* Rodapé com Atalho para a Placa QR Code de Balcão */}
       <div className="mt-10 pt-6 border-t border-slate-900 w-full max-w-md flex flex-col items-center gap-3 text-xs text-slate-500">
         <button
           onClick={() => setShowQrStand(true)}
@@ -310,5 +300,20 @@ export default function BioAndQrPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+// Envelopa o componente em <Suspense> para compatibilidade total com o build da Vercel (Next.js cacheComponents)
+export default function BioAndQrPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center text-sm font-sans">
+          Carregando página...
+        </div>
+      }
+    >
+      <BioAndQrContent />
+    </Suspense>
   );
 }
