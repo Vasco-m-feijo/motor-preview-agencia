@@ -15,6 +15,11 @@ import {
   RefreshCw,
   Palette,
   Layout,
+  QrCode,
+  Settings,
+  MousePointerClick,
+  Globe,
+  Save,
 } from 'lucide-react';
 
 const supabase = createClient(
@@ -53,11 +58,28 @@ const PALETTE_OPTIONS = [
 
 export default function AgencyDashboard() {
   const [leads, setLeads] = useState<any[]>([]);
+  const [clickCounts, setClickCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('Todos');
   const [openBriefingSlug, setOpenBriefingSlug] = useState<string | null>(null);
   const [openProposalSlug, setOpenProposalSlug] = useState<string | null>(null);
+  const [openProConfigSlug, setOpenProConfigSlug] = useState<string | null>(null);
   const [savingThemeSlug, setSavingThemeSlug] = useState<string | null>(null);
+
+  // Estado temporário para edição da gaveta "Estrutura Pro"
+  const [proForm, setProForm] = useState<{
+    custom_domain: string;
+    logo_url: string;
+    hero_image_url: string;
+    google_review_url: string;
+    ga4_id: string;
+  }>({
+    custom_domain: '',
+    logo_url: '',
+    hero_image_url: '',
+    google_review_url: '',
+    ga4_id: '',
+  });
 
   async function fetchLeads() {
     setLoading(true);
@@ -69,6 +91,20 @@ export default function AgencyDashboard() {
     if (!error && data) {
       setLeads(data);
     }
+
+    // Busca contagem de cliques rastreados por cliente
+    const { data: clicks } = await supabase
+      .from('click_events')
+      .select('slug');
+
+    if (clicks) {
+      const counts: Record<string, number> = {};
+      clicks.forEach((c: any) => {
+        counts[c.slug] = (counts[c.slug] || 0) + 1;
+      });
+      setClickCounts(counts);
+    }
+
     setLoading(false);
   }
 
@@ -115,6 +151,67 @@ export default function AgencyDashboard() {
     setSavingThemeSlug(null);
   }
 
+  function toggleProConfigDrawer(lead: any) {
+    if (openProConfigSlug === lead.slug) {
+      setOpenProConfigSlug(null);
+      return;
+    }
+    const brand = lead.site_config?.brand || {};
+    setProForm({
+      custom_domain: lead.custom_domain || '',
+      logo_url: brand.logo_url || '',
+      hero_image_url: brand.hero_image_url || '',
+      google_review_url: brand.google_review_url || '',
+      ga4_id: brand.ga4_id || '',
+    });
+    setOpenProConfigSlug(lead.slug);
+  }
+
+  async function saveProConfig(lead: any) {
+    setSavingThemeSlug(lead.slug);
+    const cleanDomain = proForm.custom_domain
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/.*$/, '');
+
+    const currentConfig = lead.site_config || {};
+    const updatedSiteConfig = {
+      ...currentConfig,
+      brand: {
+        ...(currentConfig.brand || {}),
+        logo_url: proForm.logo_url.trim(),
+        hero_image_url: proForm.hero_image_url.trim(),
+        google_review_url: proForm.google_review_url.trim(),
+        ga4_id: proForm.ga4_id.trim(),
+      },
+    };
+
+    await supabase
+      .from('leads_pipeline')
+      .update({
+        custom_domain: cleanDomain || null,
+        site_config: updatedSiteConfig,
+      })
+      .eq('slug', lead.slug);
+
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.slug === lead.slug
+          ? {
+              ...l,
+              custom_domain: cleanDomain || null,
+              site_config: updatedSiteConfig,
+            }
+          : l
+      )
+    );
+
+    setSavingThemeSlug(null);
+    alert('Configurações do Pacote Estrutura Pro salvas com sucesso!');
+  }
+
   function handleOneClickClose(lead: any) {
     const biz = lead.business_data || {};
     const phone = (biz.phone || '').replace(/\D/g, '');
@@ -146,20 +243,21 @@ export default function AgencyDashboard() {
 🔍 *Diagnóstico Atual:* ${biz.diagnosis || 'Ausência de site oficial vinculado ao Google Maps'}
 ⭐ *Reputação Verificada:* Nota ${biz.rating} (${biz.reviews_count} avaliações no Google)
 🔗 *Prévia Exclusiva:* ${origin}/${lead.slug}
+📲 *Prévia Link na Bio + QR Code:* ${origin}/${lead.slug}/bio
 
 ---
 📦 *OPÇÕES DE PACOTES:*
 
 *1. Presença Local (Entrada)*
 • Configuração e otimização completa do Perfil no Google Maps
-• Padronização de horários, fotos e link de avaliações no balcão
-• Página rápida de contato direto
+• Padronização de horários, fotos e Placa QR Code de avaliações no balcão
+• Página rápida de "Link na Bio" para o Instagram
 
 *2. Estrutura Pro (Carro-Chefe Recomendado)*
 • Tudo do pacote Presença Local
 • Landing Page Profissional Mobile-First de Alta Conversão
-• Identidade visual com as cores da sua marca + Domínio próprio (.com.br)
-• SEO Local geolocalizado + Rastreamento de cliques no WhatsApp
+• Identidade visual com Logo e Cores da sua marca + Domínio próprio (.com.br)
+• SEO Local geolocalizado + Rastreamento de cliques no WhatsApp (GA4)
 
 *3. Ecossistema & Automação (Premium)*
 • Tudo do pacote Estrutura Pro
@@ -182,13 +280,13 @@ export default function AgencyDashboard() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold mb-2 border border-emerald-500/30">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Fábrica Autônoma • Central de Operações, Design & SDR</span>
+              <span>Fábrica Autônoma • Central SDR & Entregas Estrutura Pro</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
               Pipeline de Leads & Customização Visual
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Gerencie abordagens, troque o arquétipo/cor de qualquer site em 1 clique e acesse os Briefings preenchidos.
+              Gerencie abordagens, troque arquétipo/cor em 1 clique, gere Placas QR Code e configure Domínio Próprio (.com.br).
             </p>
           </div>
 
@@ -234,13 +332,14 @@ export default function AgencyDashboard() {
               const links = lead.outreach_messages?.whatsapp_links || {};
               const briefingMd = lead.briefing_data?.briefing_md;
               const currentTheme = lead.site_config?.theme || {};
+              const totalClicks = clickCounts[lead.slug] || 0;
 
               return (
                 <div
                   key={lead.id || lead.slug}
                   className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-6 space-y-5"
                 >
-                  {/* Linha 1: Nome, Nota, Links Rápidos e Seletor de Status */}
+                  {/* Linha 1: Nome, Nota, Cliques Rastreados e Atalhos */}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                       <div className="flex items-center gap-2.5 flex-wrap">
@@ -251,16 +350,23 @@ export default function AgencyDashboard() {
                           <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                           {biz.rating} ({biz.reviews_count})
                         </span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
-                          {biz.category}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <MousePointerClick className="w-3.5 h-3.5" />
+                          {totalClicks} cliques rastreados
                         </span>
+                        {lead.custom_domain && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            <Globe className="w-3 h-3" />
+                            {lead.custom_domain}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
                         Slug: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">/{lead.slug}</code> • Tel: <strong>{biz.phone}</strong>
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
                       <a
                         href={`/${lead.slug}`}
                         target="_blank"
@@ -272,14 +378,32 @@ export default function AgencyDashboard() {
                       </a>
 
                       <a
+                        href={`/${lead.slug}/bio`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 transition"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Link Bio + Placa QR</span>
+                      </a>
+
+                      <a
                         href={`/onboarding/${lead.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 transition"
                       >
                         <ClipboardCheck className="w-3.5 h-3.5" />
-                        <span>Form Onboarding</span>
+                        <span>Onboarding</span>
                       </a>
+
+                      <button
+                        onClick={() => toggleProConfigDrawer(lead)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition cursor-pointer"
+                      >
+                        <Settings className="w-3.5 h-3.5" />
+                        <span>Estrutura Pro</span>
+                      </button>
 
                       <select
                         value={lead.status || 'Novo'}
@@ -297,20 +421,19 @@ export default function AgencyDashboard() {
                     </div>
                   </div>
 
-                  {/* NOVO BLOCO: Seletor Manual de Arquétipo, Paleta e Cor da Marca */}
+                  {/* Barra de Estúdio Visual (Arquétipo e Cores em 1 Clique) */}
                   <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-2 text-xs font-extrabold text-indigo-950 uppercase tracking-wider">
                       <Palette className="w-4 h-4 text-indigo-600" />
                       <span>Estúdio Visual (1 Clique)</span>
                       {savingThemeSlug === lead.slug && (
                         <span className="text-[11px] font-semibold text-emerald-600 animate-pulse ml-2">
-                          • Salvando no Supabase...
+                          • Salvando...
                         </span>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                      {/* Seletor de Arquétipo */}
                       <div className="flex items-center gap-1.5">
                         <Layout className="w-3.5 h-3.5 text-slate-500" />
                         <select
@@ -328,13 +451,12 @@ export default function AgencyDashboard() {
                         </select>
                       </div>
 
-                      {/* Seletor de Paleta Pré-Definida */}
                       <select
                         value={currentTheme.palette_name || ''}
                         onChange={(e) =>
                           updateLeadTheme(lead, {
                             palette_name: e.target.value || null,
-                            custom_hex: null, // Limpa cor customizada ao escolher paleta pronta
+                            custom_hex: null,
                           })
                         }
                         className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800"
@@ -346,7 +468,6 @@ export default function AgencyDashboard() {
                         ))}
                       </select>
 
-                      {/* Seletor de Cor Hexadecimal Livre (Para Logo do Cliente no Estrutura Pro) */}
                       <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 cursor-pointer">
                         <span>Cor da Logo:</span>
                         <input
@@ -374,6 +495,109 @@ export default function AgencyDashboard() {
                       </label>
                     </div>
                   </div>
+
+                  {/* GAVETA: CONFIGURAÇÃO DO PACOTE ESTRUTURA PRO */}
+                  {openProConfigSlug === lead.slug && (
+                    <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-4 border border-slate-800">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-400">
+                            ⚙️ Entrega Técnica • Pacote Estrutura Pro
+                          </span>
+                          <h3 className="text-base font-bold mt-0.5">
+                            Domínio Próprio (.com.br), Logo Oficial, Foto de Capa & GA4
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => saveProConfig(lead)}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs cursor-pointer"
+                        >
+                          <Save className="w-4 h-4" />
+                          <span>Salvar Estrutura Pro</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            1. Domínio Próprio do Cliente (sem www ou https)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="ex: carecarautocenter.com.br"
+                            value={proForm.custom_domain}
+                            onChange={(e) =>
+                              setProForm({ ...proForm, custom_domain: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            2. URL da Logo Oficial (.png / .webp / .svg)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="https://..."
+                            value={proForm.logo_url}
+                            onChange={(e) =>
+                              setProForm({ ...proForm, logo_url: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            3. URL da Foto Real da Fachada / Equipe (Hero)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="https://..."
+                            value={proForm.hero_image_url}
+                            onChange={(e) =>
+                              setProForm({ ...proForm, hero_image_url: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            4. Link Direto de Avaliação no Google (Para o QR Code)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="https://g.page/r/.../review"
+                            value={proForm.google_review_url}
+                            onChange={(e) =>
+                              setProForm({
+                                ...proForm,
+                                google_review_url: e.target.value,
+                              })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-white"
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="font-bold text-slate-300 block mb-1">
+                            5. ID do Google Analytics 4 (Opcional — ex: G-XXXXXXXXXX)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="G-XXXXXXXXXX"
+                            value={proForm.ga4_id}
+                            onChange={(e) =>
+                              setProForm({ ...proForm, ga4_id: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Linha 2: AI Battlecard de Vendas */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200/80 text-xs">

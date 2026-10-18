@@ -17,6 +17,7 @@ import {
   ArrowUpRight,
   ChevronRight,
 } from 'lucide-react';
+import ClickTracker from '../../components/ClickTracker';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +26,6 @@ const supabase = createClient(
 
 export const instant = false;
 
-// 8 Paletas Profissionais de Alto Contraste (independentes do padrão repetitivo da IA)
 const BRAND_PALETTES = [
   { name: 'Crimson Industrial', primary: '#E11D48', primaryDark: '#9F1239', accent: '#E11D48', surface: '#FFF1F2' },
   { name: 'Royal Sapphire',     primary: '#1D4ED8', primaryDark: '#1E3A8A', accent: '#1D4ED8', surface: '#EFF6FF' },
@@ -37,37 +37,31 @@ const BRAND_PALETTES = [
   { name: 'Amber Gold',         primary: '#D97706', primaryDark: '#78350F', accent: '#D97706', surface: '#FFFBEB' },
 ];
 
-// 4 Arquétipos Estruturais Completamente Diferentes
 type LayoutArchetype = 'dark-carbon' | 'editorial-pill' | 'bento-modern' | 'industrial-bold';
 const ARCHETYPES: LayoutArchetype[] = [
-  'dark-carbon',     // 0: mello-mechanic-service
-  'editorial-pill',  // 1: carecar-auto-center
-  'bento-modern',    // 2: Mosaico Bento Assimétrico
-  'industrial-bold', // 3: betos-car-tristeza
+  'dark-carbon',
+  'editorial-pill',
+  'bento-modern',
+  'industrial-bold',
 ];
 
-// Substitua a função getDesignSystemForSlug(slug: string) por esta versão que lê o tema salvo no /painel:
 function getDesignSystemForSlug(slug: string, savedTheme?: any) {
   let sum = 0;
   for (let i = 0; i < slug.length; i++) {
     sum += slug.charCodeAt(i);
   }
-
   const autoArchetype = ARCHETYPES[sum % ARCHETYPES.length];
   const autoPalette = BRAND_PALETTES[sum % BRAND_PALETTES.length];
 
-  // 1. Se você escolheu um arquétipo manualmente no /painel, usa ele; senão usa o automático do slug
   const chosenArchetype: LayoutArchetype =
     savedTheme?.archetype && ARCHETYPES.includes(savedTheme.archetype)
       ? savedTheme.archetype
       : autoArchetype;
 
-  // 2. Se você escolheu uma paleta pelo nome no /painel, busca na lista
   const matchedPalette = savedTheme?.palette_name
     ? BRAND_PALETTES.find((p) => p.name === savedTheme.palette_name)
     : null;
 
-  // 3. Se você definiu uma cor hexadecimal customizada (ex: cor da logo no pacote Estrutura Pro), aplica ela
   if (savedTheme?.custom_hex) {
     return {
       archetype: chosenArchetype,
@@ -128,12 +122,16 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
 
   const { business_data: biz, site_config: config, briefing_data: briefing } = lead;
   const answers = briefing?.answers || {};
+  const brand = config.brand || {};
 
-  // Prioriza os dados revisados pelo cliente no Onboarding (Sprint 3)
   const displayName = answers.q1_name || biz.short_name || biz.name;
   const legalName = answers.q1_name || biz.name;
   const displayAddress = answers.q1_address || config.location?.address || biz.address;
   const displayCnpj = answers.q1_cnpj || '';
+
+  const logoUrl = brand.logo_url || '';
+  const heroImageUrl = brand.hero_image_url || '';
+  const ga4Id = brand.ga4_id || '';
 
   const design = getDesignSystemForSlug(slug, config.theme);
   const hero = config.hero || {};
@@ -160,6 +158,28 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
   const isBento = design.archetype === 'bento-modern';
   const isIndustrial = design.archetype === 'industrial-bold';
 
+  // Renderizador reutilizável da Logo ou Inicial da Marca no Header
+  const renderBrandBadge = (roundedClass: string) => {
+    if (logoUrl) {
+      return (
+        <img
+          src={logoUrl}
+          alt={`Logo ${displayName}`}
+          width={140}
+          height={44}
+          className="h-10 w-auto object-contain shrink-0"
+        />
+      );
+    }
+    return (
+      <div
+        className={`w-10 h-10 ${roundedClass} bg-[var(--color-primary)] text-white font-black flex items-center justify-center shrink-0`}
+      >
+        {displayName.charAt(0).toUpperCase()}
+      </div>
+    );
+  };
+
   return (
     <div
       style={customThemeStyles}
@@ -173,22 +193,20 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
           : 'bg-slate-50 text-slate-900'
       }`}
     >
+      {/* RASTREADOR AUTOMÁTICO DE CLIQUES (SUPABASE + GA4/GTM) */}
+      <ClickTracker slug={slug} ga4Id={ga4Id} />
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* =====================================================================
-          1. HEADER PERSONALIZADO POR ARQUÉTIPO
-      ===================================================================== */}
+      {/* 1. HEADER PERSONALIZADO POR ARQUÉTIPO */}
       {isEditorial ? (
-        /* HEADER ARQUÉTIPO EDITORIAL: Menu Flutuante em Pílula */
         <div className="sticky top-4 z-40 px-4">
           <header className="max-w-5xl mx-auto bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-full px-6 h-16 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-3 truncate">
-              <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] text-white font-black flex items-center justify-center shrink-0">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
+              {renderBrandBadge('rounded-full')}
               <span className="font-extrabold text-base sm:text-lg text-slate-900 truncate">
                 {displayName}
               </span>
@@ -211,7 +229,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
           </header>
         </div>
       ) : isIndustrial ? (
-        /* HEADER ARQUÉTIPO INDUSTRIAL: Barra Dupla de Alto Contraste e Bordas Fortes */
         <header className="sticky top-0 z-40 bg-white border-b-4 border-slate-950">
           <div className="bg-slate-950 text-white text-[11px] font-bold uppercase tracking-widest py-1.5 px-4">
             <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -221,9 +238,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
           </div>
           <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-[var(--color-primary)] border-2 border-slate-950 text-white font-black text-xl flex items-center justify-center">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
+              {renderBrandBadge('border-2 border-slate-950')}
               <div>
                 <span className="font-black text-lg sm:text-xl uppercase tracking-tight text-slate-950 block leading-none">
                   {displayName}
@@ -247,7 +262,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
           </div>
         </header>
       ) : (
-        /* HEADER DARK CARBONO OU BENTO */
         <header
           className={`sticky top-0 z-40 backdrop-blur border-b ${
             isDark
@@ -257,9 +271,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         >
           <div className="max-w-6xl mx-auto px-4 h-18 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[var(--color-primary)] text-white font-black flex items-center justify-center">
-                <Wrench className="w-4 h-4" />
-              </div>
+              {renderBrandBadge('rounded-lg')}
               <span className="font-extrabold text-lg tracking-tight truncate max-w-[200px] sm:max-w-xs">
                 {displayName}
               </span>
@@ -285,11 +297,8 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </header>
       )}
 
-      {/* =====================================================================
-          2. HERO SECTION (4 COMPOSIÇÕES ESTRUTURAIS DISTINTAS)
-      ===================================================================== */}
+      {/* 2. HERO SECTION */}
       {isDark && (
-        /* HERO 0: DARK CARBONO PERFORMANCE (mello-mechanic-service) */
         <section className="relative py-16 md:py-24 border-b border-zinc-800 overflow-hidden">
           <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <div className="lg:col-span-7">
@@ -315,58 +324,59 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
                   <MessageCircle className="w-5 h-5" />
                   <span>{hero.cta_text || 'Agendar Atendimento via WhatsApp'}</span>
                 </a>
-                {location.maps_url && (
-                  <a
-                    href={location.maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-bold text-sm bg-zinc-900 text-zinc-200 border border-zinc-800 hover:bg-zinc-800 transition"
-                  >
-                    <MapPin className="w-4 h-4 text-[var(--color-primary)]" />
-                    <span>Traçar Rota no Mapa</span>
-                  </a>
-                )}
               </div>
             </div>
 
-            {/* Painel Técnico de Reputação */}
             <div className="lg:col-span-5">
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-7 relative">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-5 mb-5">
-                  <div>
-                    <span className="text-xs font-bold uppercase text-zinc-400">Reputação Verificada</span>
-                    <h3 className="text-xl font-extrabold text-white mt-0.5">Google Maps Oficial</h3>
+              {heroImageUrl ? (
+                <div className="rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl">
+                  <img
+                    src={heroImageUrl}
+                    alt={displayName}
+                    width={600}
+                    height={420}
+                    fetchPriority="high"
+                    loading="eager"
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-7 relative">
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-5 mb-5">
+                    <div>
+                      <span className="text-xs font-bold uppercase text-zinc-400">Reputação Verificada</span>
+                      <h3 className="text-xl font-extrabold text-white mt-0.5">Google Maps Oficial</h3>
+                    </div>
+                    <div className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 border border-[var(--color-primary)]/30 text-[var(--color-primary)] font-black text-2xl">
+                      {biz.rating} ★
+                    </div>
                   </div>
-                  <div className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 border border-[var(--color-primary)]/30 text-[var(--color-primary)] font-black text-2xl">
-                    {biz.rating} ★
+                  <p className="text-sm text-zinc-300 leading-relaxed mb-6">
+                    Mais de <strong>{biz.reviews_count} clientes reais</strong> avaliaram o atendimento de{' '}
+                    <strong>{displayName}</strong> na região.
+                  </p>
+                  <div className="space-y-2.5 text-xs text-zinc-400">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
+                      <span>Orçamento prévio transparente sem surpresas</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
+                      <span>Atendimento direto com a equipe técnica</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
+                      <span className="truncate">{displayAddress}</span>
+                    </div>
                   </div>
                 </div>
-                <p className="text-sm text-zinc-300 leading-relaxed mb-6">
-                  Mais de <strong>{biz.reviews_count} clientes reais</strong> avaliaram o atendimento de{' '}
-                  <strong>{displayName}</strong> na região.
-                </p>
-                <div className="space-y-2.5 text-xs text-zinc-400">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
-                    <span>Orçamento prévio transparente sem surpresas</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
-                    <span>Atendimento direto com a equipe técnica</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
-                    <span className="truncate">{displayAddress}</span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </section>
       )}
 
       {isEditorial && (
-        /* HERO 1: EDITORIAL CLEAN & CARD CURVO (carecar-auto-center) */
         <section className="pt-8 pb-16 px-4">
           <div className="max-w-6xl mx-auto bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white rounded-3xl p-8 sm:p-14 md:p-20 shadow-xl relative overflow-hidden">
             <div className="max-w-3xl mx-auto text-center">
@@ -393,10 +403,22 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
                   <span>{hero.cta_text || 'Solicitar Orçamento no WhatsApp'}</span>
                 </a>
               </div>
+              {heroImageUrl && (
+                <div className="mt-10 rounded-2xl overflow-hidden border-2 border-white/20 shadow-xl max-w-2xl mx-auto">
+                  <img
+                    src={heroImageUrl}
+                    alt={displayName}
+                    width={700}
+                    height={420}
+                    fetchPriority="high"
+                    loading="eager"
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Barra Flutuante de Métricas Abaixo do Card Curvo */}
           <div className="max-w-4xl mx-auto -mt-8 relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 px-4">
             <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-md text-center">
               <div className="text-2xl font-black text-[var(--color-primary)]">{biz.rating} / 5.0</div>
@@ -415,7 +437,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
       )}
 
       {isBento && (
-        /* HERO 2: BENTO GRID ASSIMÉTRICO */
         <section className="py-12 md:py-20 max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             <div className="lg:col-span-8 bg-white rounded-3xl p-8 sm:p-12 border border-stone-200 flex flex-col justify-between shadow-2xs">
@@ -446,19 +467,33 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
             </div>
 
             <div className="lg:col-span-4 flex flex-col gap-6">
-              <div className="bg-[var(--color-primary)] text-white rounded-3xl p-7 flex-1 flex flex-col justify-between">
-                <div className="flex items-center gap-1 text-amber-300">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-amber-300" />
-                  ))}
+              {heroImageUrl ? (
+                <div className="rounded-3xl overflow-hidden border border-stone-200 flex-1">
+                  <img
+                    src={heroImageUrl}
+                    alt={displayName}
+                    width={500}
+                    height={380}
+                    fetchPriority="high"
+                    loading="eager"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <div>
-                  <div className="text-4xl font-black mt-4">{biz.rating}/5</div>
-                  <p className="text-sm text-white/85 mt-1">
-                    Aprovado por {biz.reviews_count} clientes no Google Maps.
-                  </p>
+              ) : (
+                <div className="bg-[var(--color-primary)] text-white rounded-3xl p-7 flex-1 flex flex-col justify-between">
+                  <div className="flex items-center gap-1 text-amber-300">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-amber-300" />
+                    ))}
+                  </div>
+                  <div>
+                    <div className="text-4xl font-black mt-4">{biz.rating}/5</div>
+                    <p className="text-sm text-white/85 mt-1">
+                      Aprovado por {biz.reviews_count} clientes no Google Maps.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="bg-white rounded-3xl p-7 border border-stone-200">
                 <h3 className="font-bold text-sm text-stone-900 flex items-center gap-2">
@@ -473,7 +508,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
       )}
 
       {isIndustrial && (
-        /* HERO 3: INDUSTRIAL FORTE / ALTO CONTRASTE (betos-car-tristeza) */
         <section className="py-14 md:py-20 bg-white border-b-4 border-slate-950">
           <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-8">
@@ -502,27 +536,39 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
             </div>
 
             <div className="lg:col-span-4">
-              <div className="bg-[var(--color-surface)] border-4 border-slate-950 p-6 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)]">
-                <div className="text-xs font-black uppercase tracking-widest text-slate-600">
-                  Avaliação Oficial Google
+              {heroImageUrl ? (
+                <div className="border-4 border-slate-950 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] overflow-hidden">
+                  <img
+                    src={heroImageUrl}
+                    alt={displayName}
+                    width={500}
+                    height={380}
+                    fetchPriority="high"
+                    loading="eager"
+                    className="w-full h-auto object-cover"
+                  />
                 </div>
-                <div className="text-5xl font-black text-slate-950 my-2">{biz.rating} ★</div>
-                <p className="text-xs font-bold text-slate-700 uppercase">
-                  Baseado em {biz.reviews_count} opiniões reais de clientes atendidos.
-                </p>
-                <div className="mt-4 pt-4 border-t-2 border-slate-950 text-xs font-bold text-slate-800 flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-0.5" />
-                  <span>{displayAddress}</span>
+              ) : (
+                <div className="bg-[var(--color-surface)] border-4 border-slate-950 p-6 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)]">
+                  <div className="text-xs font-black uppercase tracking-widest text-slate-600">
+                    Avaliação Oficial Google
+                  </div>
+                  <div className="text-5xl font-black text-slate-950 my-2">{biz.rating} ★</div>
+                  <p className="text-xs font-bold text-slate-700 uppercase">
+                    Baseado em {biz.reviews_count} opiniões reais de clientes atendidos.
+                  </p>
+                  <div className="mt-4 pt-4 border-t-2 border-slate-950 text-xs font-bold text-slate-800 flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-0.5" />
+                    <span>{displayAddress}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </section>
       )}
 
-      {/* =====================================================================
-          3. SEÇÃO DE SERVIÇOS (ESTRUTURAS DISTINTAS POR ARQUÉTIPO)
-      ===================================================================== */}
+      {/* 3. SEÇÃO DE SERVIÇOS */}
       <section id="servicos" className="py-16 md:py-24 max-w-6xl mx-auto px-4">
         <div className={`mb-12 ${isIndustrial ? 'border-l-8 border-[var(--color-primary)] pl-5' : 'text-center max-w-2xl mx-auto'}`}>
           <span className="text-xs font-extrabold uppercase tracking-widest text-[var(--color-primary)]">
@@ -537,7 +583,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </div>
 
         {isDark ? (
-          /* SERVIÇOS EM LISTA HORIZONTAL EXECUTIVA (mello-mechanic-service) */
           <div className="space-y-4">
             {services.map((srv: any, idx: number) => (
               <div
@@ -570,7 +615,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
             ))}
           </div>
         ) : isIndustrial ? (
-          /* SERVIÇOS ESTILO INDUSTRIAL COM CABEÇALHO PRETO (betos-car-tristeza) */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {services.map((srv: any, idx: number) => (
               <div
@@ -608,7 +652,6 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
             ))}
           </div>
         ) : (
-          /* SERVIÇOS EDITORIAL / BENTO (carecar-auto-center) */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {services.map((srv: any, idx: number) => (
               <div
@@ -639,9 +682,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         )}
       </section>
 
-      {/* =====================================================================
-          4. DIFERENCIAIS COMPETITIVOS
-      ===================================================================== */}
+      {/* 4. DIFERENCIAIS COMPETITIVOS */}
       <section
         id="diferenciais"
         className={`py-16 md:py-24 border-y ${
@@ -680,9 +721,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </div>
       </section>
 
-      {/* =====================================================================
-          5. DEPOIMENTOS REAIS DO GOOGLE MAPS
-      ===================================================================== */}
+      {/* 5. DEPOIMENTOS REAIS DO GOOGLE MAPS */}
       {testimonials.length > 0 && (
         <section id="avaliacoes" className="py-16 md:py-24 max-w-6xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
@@ -729,9 +768,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </section>
       )}
 
-      {/* =====================================================================
-          6. FAQ ESTRATÉGICO
-      ===================================================================== */}
+      {/* 6. FAQ ESTRATÉGICO */}
       {faq.length > 0 && (
         <section
           className={`py-16 md:py-24 border-t ${
@@ -769,9 +806,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </section>
       )}
 
-      {/* =====================================================================
-          7. LOCALIZAÇÃO E HORÁRIOS
-      ===================================================================== */}
+      {/* 7. LOCALIZAÇÃO E HORÁRIOS */}
       <section id="localizacao" className="py-16 md:py-24 max-w-6xl mx-auto px-4 border-t border-slate-200/20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div
@@ -835,9 +870,7 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
         </div>
       </section>
 
-      {/* =====================================================================
-          8. FOOTER
-      ===================================================================== */}
+      {/* 8. FOOTER */}
       <footer className="bg-slate-950 text-slate-400 py-12 text-center text-xs border-t border-slate-800">
         <div className="max-w-6xl mx-auto px-4">
           <p className="font-extrabold text-white text-base mb-1">{legalName}</p>
