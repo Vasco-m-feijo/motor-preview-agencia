@@ -9,17 +9,18 @@ import {
   MessageCircle,
   MapPin,
   Star,
-  Calendar,
   Printer,
   Share2,
-  ExternalLink,
   CheckCircle2,
+  Lock,
 } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+const ADMIN_MASTER_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'tracao2026';
 
 function MonthlyReportContent() {
   const params = useParams();
@@ -29,6 +30,24 @@ function MonthlyReportContent() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [daysFilter, setDaysFilter] = useState<number>(30);
+
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isAdminSession, setIsAdminSession] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedAdmin = localStorage.getItem('agencia_admin_auth');
+      const savedClient = sessionStorage.getItem(`report_auth_${slug}`);
+      if (savedAdmin === ADMIN_MASTER_PASS) {
+        setIsUnlocked(true);
+        setIsAdminSession(true);
+      } else if (savedClient === 'ok') {
+        setIsUnlocked(true);
+      }
+    }
+  }, [slug]);
 
   useEffect(() => {
     async function loadReport() {
@@ -61,15 +80,15 @@ function MonthlyReportContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-slate-600">
-        Calculando métricas do relatório...
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center text-sm">
+        Carregando relatório...
       </div>
     );
   }
 
   if (!lead) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-slate-600">
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center text-sm">
         Relatório não encontrado.
       </div>
     );
@@ -77,16 +96,75 @@ function MonthlyReportContent() {
 
   const biz = lead.business_data || {};
   const answers = lead.briefing_data?.answers || {};
+  const brand = lead.site_config?.brand || {};
   const displayName = answers.q1_name || biz.short_name || biz.name;
   const cleanPhone = (answers.q2_phone || biz.phone || '').toString().replace(/\D/g, '');
   const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+
+  // PIN do proprietário: PIN definido no painel ou 4 últimos números do telefone da empresa
+  const ownerPin = brand.client_pin || cleanPhone.slice(-4) || '1234';
+
+  function handleUnlockReport(e: React.FormEvent) {
+    e.preventDefault();
+    if (pinInput.trim() === ADMIN_MASTER_PASS) {
+      setIsUnlocked(true);
+      setIsAdminSession(true);
+      setPinError(false);
+    } else if (pinInput.trim() === ownerPin) {
+      setIsUnlocked(true);
+      sessionStorage.setItem(`report_auth_${slug}`, 'ok');
+      setPinError(false);
+    } else {
+      setPinError(true);
+    }
+  }
+
+  // TELA DE BLOQUEIO POR SENHA / PIN DO PROPRIETÁRIO
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 font-sans">
+        <form
+          onSubmit={handleUnlockReport}
+          className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto">
+            <Lock className="w-6 h-6" />
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 block">
+            Acesso Restrito ao Proprietário
+          </span>
+          <h1 className="text-xl font-extrabold">{displayName}</h1>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Digite o seu Código de Acesso de 4 dígitos para visualizar o relatório de resultados da sua página:
+          </p>
+          <input
+            type="password"
+            placeholder="Digite seu código..."
+            value={pinInput}
+            onChange={(e) => setPinInput(e.target.value)}
+            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-center text-sm font-bold text-white"
+          />
+          {pinError && (
+            <p className="text-xs text-rose-400 font-semibold">
+              Código inválido. Verifique o código enviado no seu WhatsApp.
+            </p>
+          )}
+          <button
+            type="submit"
+            className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs uppercase tracking-wider cursor-pointer"
+          >
+            Acessar Relatório
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   const totalClicks = events.length;
   const whatsappClicks = events.filter((e) => e.event_type === 'whatsapp-click').length;
   const mapsClicks = events.filter((e) => e.event_type === 'maps-click').length;
   const reviewClicks = events.filter((e) => e.event_type === 'review-click').length;
 
-  // Agrupamento por origem do clique (location)
   const locationMap: Record<string, number> = {};
   events.forEach((ev) => {
     const loc = ev.location || 'outros';
@@ -97,19 +175,19 @@ function MonthlyReportContent() {
 
   function translateLocation(loc: string) {
     const dictionary: Record<string, string> = {
-      hero: 'Botão Principal do Topo (Hero)',
-      header: 'Menu Superior (Header)',
-      'mobile-sticky-bar': 'Barra Fixa Mobile (Celular)',
-      'service-card-1': 'Card do 1º Serviço Principal',
-      'service-card-2': 'Card do 2º Serviço Principal',
-      'service-card-3': 'Card do 3º Serviço Principal',
+      hero: 'Botão Principal do Topo',
+      header: 'Botão do Menu Superior',
+      'mobile-sticky-bar': 'Barra Fixa no Celular',
+      'service-card-1': '1º Serviço Principal',
+      'service-card-2': '2º Serviço Principal',
+      'service-card-3': '3º Serviço Principal',
       'triage-modal-submit': 'Ficha de Pré-Atendimento (Triagem)',
-      'triage-banner-open': 'Abertura do Assistente de Triagem',
-      'bio-main-cta': 'Link na Bio do Instagram (WhatsApp)',
+      'triage-banner-open': 'Abertura do Pré-Atendimento',
+      'bio-main-cta': 'Link do Perfil do Instagram (WhatsApp)',
       'bio-review-cta': 'Placa QR Code / Avaliação Google',
-      'location-section': 'Botão Traçar Rota no Google Maps',
+      'location-section': 'Botão Como Chegar (Google Maps)',
     };
-    return dictionary[loc] || `Botão: ${loc}`;
+    return dictionary[loc] || `Atalho: ${loc}`;
   }
 
   function sendReportViaWhatsApp() {
@@ -117,19 +195,20 @@ function MonthlyReportContent() {
       ? `${translateLocation(sortedLocations[0][0])} (${sortedLocations[0][1]} cliques)`
       : 'Botão Principal de Orçamento';
 
-    const reportText = `📊 *RELATÓRIO DE PERFORMANCE DIGITAL — ${displayName.toUpperCase()}*
-📅 *Período analisado:* Últimos ${daysFilter} dias
+    const reportText = `📊 *RESUMO MENSAL DE RESULTADOS — ${displayName.toUpperCase()}*
+📅 *Período:* Últimos ${daysFilter} dias
 
-✅ *Total de Interações Rastreadas:* ${totalClicks} ações
-💬 *Cliques diretos para o WhatsApp:* ${whatsappClicks} solicitações
-📍 *Rotas traçadas para o endereço:* ${mapsClicks} clientes
-⭐ *Acessos à Placa de Avaliação Google:* ${reviewClicks} acessos
+✅ *Total de Procura na Página:* ${totalClicks} ações
+💬 *Cliques para chamar no WhatsApp:* ${whatsappClicks} pedidos
+📍 *Clientes que traçaram rota no Mapa:* ${mapsClicks} visitas
+⭐ *Acessos para avaliar no Google:* ${reviewClicks} acessos
 
-🏆 *Canal Campeão de Conversão:*
+🏆 * Botão Mais Clicado pelos Clientes:*
 ${topOrigin}
 
-🔗 *Painel em tempo real:*
-${typeof window !== 'undefined' ? window.location.href : ''}`;
+🔒 *Link do seu Relatório Completo:*
+${typeof window !== 'undefined' ? window.location.href : ''}
+🔑 *Seu Código de Acesso:* ${ownerPin}`;
 
     window.open(
       `https://wa.me/${formattedPhone}?text=${encodeURIComponent(reportText)}`,
@@ -140,16 +219,15 @@ ${typeof window !== 'undefined' ? window.location.href : ''}`;
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 py-10 px-4 font-sans print:bg-white print:p-0">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Barra de Topo */}
         <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-lg">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold mb-2">
               <BarChart3 className="w-3.5 h-3.5" />
-              <span>Pacote Ecossistema & Automação • Relatório Oficial</span>
+              <span>Relatório de Resultados • Código do Cliente: {ownerPin}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black">{displayName}</h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Monitoramento em tempo real de cliques no WhatsApp, pré-atendimentos e rotas no Google Maps.
+              Acompanhamento de pedidos de orçamento no WhatsApp e rotas traçadas no Google Maps.
             </p>
           </div>
 
@@ -164,13 +242,15 @@ ${typeof window !== 'undefined' ? window.location.href : ''}`;
               <option value={90}>Últimos 90 dias</option>
             </select>
 
-            <button
-              onClick={sendReportViaWhatsApp}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs cursor-pointer"
-            >
-              <Share2 className="w-4 h-4" />
-              <span>Enviar Resumo no WhatsApp do Cliente</span>
-            </button>
+            {isAdminSession && (
+              <button
+                onClick={sendReportViaWhatsApp}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Enviar p/ WhatsApp do Cliente (com PIN)</span>
+              </button>
+            )}
 
             <button
               onClick={() => window.print()}
@@ -182,55 +262,53 @@ ${typeof window !== 'undefined' ? window.location.href : ''}`;
           </div>
         </div>
 
-        {/* 4 Indicadores Principais */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Total de Ações</span>
+              <span className="text-xs font-bold uppercase">Total de Cliques</span>
               <MousePointerClick className="w-5 h-5 text-indigo-600" />
             </div>
             <div className="text-3xl font-black text-slate-900">{totalClicks}</div>
-            <p className="text-xs text-slate-500 mt-1">Interações nos últimos {daysFilter} dias</p>
+            <p className="text-xs text-slate-500 mt-1">Ações nos últimos {daysFilter} dias</p>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Cliques WhatsApp</span>
+              <span className="text-xs font-bold uppercase">Chamadas WhatsApp</span>
               <MessageCircle className="w-5 h-5 text-emerald-600" />
             </div>
             <div className="text-3xl font-black text-emerald-600">{whatsappClicks}</div>
-            <p className="text-xs text-slate-500 mt-1">Oportunidades reais de orçamento</p>
+            <p className="text-xs text-slate-500 mt-1">Cliques para pedir orçamento</p>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Rotas Traçadas</span>
+              <span className="text-xs font-bold uppercase">Rotas no Mapa</span>
               <MapPin className="w-5 h-5 text-blue-600" />
             </div>
             <div className="text-3xl font-black text-blue-600">{mapsClicks}</div>
-            <p className="text-xs text-slate-500 mt-1">Visitas guiadas pelo Google Maps</p>
+            <p className="text-xs text-slate-500 mt-1">Clientes que abriram o endereço</p>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Avaliações QR/Bio</span>
+              <span className="text-xs font-bold uppercase">Avaliações Google</span>
               <Star className="w-5 h-5 text-amber-500" />
             </div>
             <div className="text-3xl font-black text-amber-500">{reviewClicks}</div>
-            <p className="text-xs text-slate-500 mt-1">Cliques para avaliar 5 estrelas</p>
+            <p className="text-xs text-slate-500 mt-1">Cliques para avaliar a empresa</p>
           </div>
         </div>
 
-        {/* Ranking de Origem dos Cliques */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
             <h2 className="text-base font-extrabold text-slate-900 mb-4">
-              Quais botões e serviços mais geraram clientes?
+              O que os clientes mais procuraram na sua página:
             </h2>
 
             {sortedLocations.length === 0 ? (
               <p className="text-xs text-slate-500 py-8 text-center">
-                Nenhum clique registrado neste período ainda. Faça um clique de teste na página principal para ver o gráfico!
+                Nenhum clique registrado neste período ainda.
               </p>
             ) : (
               <div className="space-y-3.5">
@@ -257,15 +335,14 @@ ${typeof window !== 'undefined' ? window.location.href : ''}`;
             )}
           </div>
 
-          {/* Últimas Conversões em Tempo Real */}
           <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
             <h2 className="text-base font-extrabold text-slate-900 mb-4">
-              Últimos Cliques Registrados
+              Últimos Acessos Registrados
             </h2>
 
             {events.length === 0 ? (
               <p className="text-xs text-slate-500 py-8 text-center">
-                Aguardando primeiros cliques.
+                Aguardando novos cliques.
               </p>
             ) : (
               <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
@@ -303,7 +380,7 @@ export default function MonthlyReportPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm">
+        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center text-sm">
           Carregando relatório...
         </div>
       }

@@ -7,12 +7,11 @@ import {
   MessageCircle,
   MapPin,
   Star,
-  QrCode,
   Printer,
-  ArrowLeft,
   ExternalLink,
   CheckCircle2,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 import ClickTracker from '../../../components/ClickTracker';
 
@@ -21,20 +20,20 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Mesma senha mestra do seu /painel
+const ADMIN_MASTER_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'tracao2026';
+
 function BioAndQrContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = params?.slug as string;
+  const isPlacaMode = searchParams?.get('placa') === '1';
 
   const [lead, setLead] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showQrStand, setShowQrStand] = useState(false);
-
-  useEffect(() => {
-    if (searchParams?.get('placa') === '1') {
-      setShowQrStand(true);
-    }
-  }, [searchParams]);
+  const [isAuthorizedForPlaca, setIsAuthorizedForPlaca] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   useEffect(() => {
     async function loadLead() {
@@ -46,6 +45,14 @@ function BioAndQrContent() {
         .single();
       setLead(data);
       setLoading(false);
+
+      // Se você já estiver logado no /painel neste navegador, libera a placa QR automaticamente
+      if (typeof window !== 'undefined') {
+        const savedAdmin = localStorage.getItem('agencia_admin_auth');
+        if (savedAdmin === ADMIN_MASTER_PASS) {
+          setIsAuthorizedForPlaca(true);
+        }
+      }
     }
     loadLead();
   }, [slug]);
@@ -80,6 +87,9 @@ function BioAndQrContent() {
   const cleanPhone = (answers.q2_phone || biz.phone || '').toString().replace(/\D/g, '');
   const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
 
+  // PIN do proprietário: usa o PIN customizado ou os 4 últimos dígitos do telefone da empresa
+  const ownerPin = brand.client_pin || cleanPhone.slice(-4) || '1234';
+
   const mainWaUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
     `Olá! Vim pelo Link da Bio da ${displayName} e gostaria de atendimento.`
   )}`;
@@ -96,19 +106,60 @@ function BioAndQrContent() {
     reviewUrl
   )}`;
 
-  // MODO 2: PLACA QR CODE DE BALCÃO PARA IMPRESSÃO
-  if (showQrStand) {
+  function handleVerifyPin(e: React.FormEvent) {
+    e.preventDefault();
+    if (pinInput.trim() === ADMIN_MASTER_PASS || pinInput.trim() === ownerPin) {
+      setIsAuthorizedForPlaca(true);
+      setPinError(false);
+    } else {
+      setPinError(true);
+    }
+  }
+
+  // =========================================================================
+  // MODO PLACA QR CODE (PROTEGIDO CONTRA VISITANTES COMUNS)
+  // =========================================================================
+  if (isPlacaMode) {
+    if (!isAuthorizedForPlaca) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 font-sans">
+          <form
+            onSubmit={handleVerifyPin}
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center mx-auto">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h1 className="text-lg font-extrabold">Impressão de Placa QR Code</h1>
+            <p className="text-xs text-slate-400">
+              Área exclusiva do proprietário de <strong>{displayName}</strong>. Digite seu código de 4 dígitos para abrir a placa de balcão:
+            </p>
+            <input
+              type="password"
+              placeholder="Código de acesso..."
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-center text-sm font-bold text-white"
+            />
+            {pinError && (
+              <p className="text-xs text-rose-400 font-semibold">
+                Código incorreto. Solicite o código ao suporte da agência.
+              </p>
+            )}
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs uppercase tracking-wider cursor-pointer"
+            >
+              Liberar Placa para Impressão
+            </button>
+          </form>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-200 py-8 px-4 flex flex-col items-center justify-center print:bg-white print:p-0">
-        <div className="max-w-md w-full mb-4 flex items-center justify-between print:hidden">
-          <button
-            onClick={() => setShowQrStand(false)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-slate-800 text-xs font-bold shadow-xs cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Voltar para Link na Bio</span>
-          </button>
-
+        <div className="max-w-md w-full mb-4 flex items-center justify-end print:hidden">
           <button
             onClick={() => window.print()}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-extrabold shadow-md hover:bg-slate-800 cursor-pointer"
@@ -151,7 +202,7 @@ function BioAndQrContent() {
               Gostou do nosso atendimento?
             </h2>
             <p className="text-xs text-slate-600 mt-1">
-              Aponte a câmera do seu celular para o QR Code abaixo e deixe sua avaliação no Google em 10 segundos!
+              Aponte a câmera do seu celular para o código abaixo e deixe sua avaliação no Google em 10 segundos!
             </p>
           </div>
 
@@ -174,7 +225,9 @@ function BioAndQrContent() {
     );
   }
 
-  // MODO 1: PÁGINA "LINK NA BIO" OTIMIZADA PARA INSTAGRAM
+  // =========================================================================
+  // MODO PÁGINA "LINK NA BIO" (100% LIMPA PARA O CLIENTE FINAL)
+  // =========================================================================
   return (
     <div
       style={{ '--color-primary': primaryColor } as React.CSSProperties}
@@ -290,20 +343,13 @@ function BioAndQrContent() {
         </div>
       </div>
 
-      <div className="mt-10 pt-6 border-t border-slate-900 w-full max-w-md flex flex-col items-center gap-3 text-xs text-slate-500">
-        <button
-          onClick={() => setShowQrStand(true)}
-          className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white font-semibold cursor-pointer"
-        >
-          <QrCode className="w-4 h-4 text-[var(--color-primary)]" />
-          <span>Gerar Placa QR Code de Balcão (Para Impressão)</span>
-        </button>
+      <div className="mt-10 pt-4 text-center text-[11px] text-slate-600">
+        © {new Date().getFullYear()} {displayName}
       </div>
     </div>
   );
 }
 
-// Envelopa o componente em <Suspense> para compatibilidade total com o build da Vercel (Next.js cacheComponents)
 export default function BioAndQrPage() {
   return (
     <Suspense

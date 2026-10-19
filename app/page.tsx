@@ -12,12 +12,10 @@ import {
   ExternalLink,
   HelpCircle,
   Sparkles,
-  QrCode,
-  BarChart3,
 } from 'lucide-react';
 
 // Coloque aqui o seu número de WhatsApp comercial (55 + DDD + Número)
-const AGENCY_WHATSAPP = '5551999712611';
+const AGENCY_WHATSAPP = '5551999999999';
 
 function makeAgencyWaLink(text: string) {
   return `https://wa.me/${AGENCY_WHATSAPP}?text=${encodeURIComponent(text)}`;
@@ -38,7 +36,7 @@ export default function AgencyHomePage() {
                 Tração<span className="text-emerald-400">Local</span>
               </span>
               <span className="hidden sm:inline-block ml-2 text-[11px] text-slate-400 border border-slate-800 rounded-full px-2.5 py-0.5">
-                Presença Digital & Automação
+                Posicionamento & Vendas no WhatsApp
               </span>
             </div>
           </div>
@@ -51,23 +49,23 @@ export default function AgencyHomePage() {
               Como funciona
             </a>
             <a href="#portfolio" className="hover:text-emerald-400 transition">
-              Portfólio & Demos ao Vivo
+              Exemplos Reais
             </a>
             <a href="#pacotes" className="hover:text-emerald-400 transition">
-              Pacotes
+              Planos
             </a>
           </nav>
 
           <a
             href={makeAgencyWaLink(
-              'Olá! Vim pelo site da agência e quero solicitar um diagnóstico gratuito da minha empresa no Google.'
+              'Olá! Vim pelo site da agência e quero solicitar uma avaliação gratuita da minha empresa no Google.'
             )}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>Diagnóstico Gratuito</span>
+            <span>Avaliação Gratuita</span>
           </a>
         </div>
       </header>
@@ -77,7 +75,7 @@ export default function AgencyHomePage() {
         <div className="max-w-5xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-6">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Estruturação de Presença Digital e Vendas Locais em Porto Alegre</span>
+            <span>Especialistas em Comércio e Serviços Locais em Porto Alegre</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
@@ -85,31 +83,31 @@ export default function AgencyHomePage() {
             <span className="text-emerald-400">
               clientes no WhatsApp
             </span>{' '}
-            do seu comércio.
+            da sua empresa.
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Não fazemos apenas sites bonitos. Estruturamos o posicionamento completo do seu negócio no Google Maps, criamos Landing Pages ultrarrápidas de alta conversão e automatizamos a triagem do seu atendimento.
+            Fazemos o seu negócio ser encontrado por quem está procurando pelo seu serviço no bairro, apresentamos o seu trabalho com credibilidade no celular e organizamos os pedidos de orçamento direto no seu WhatsApp.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href={makeAgencyWaLink(
-                'Olá! Quero ver uma demonstração de como ficaria a estrutura digital da minha empresa.'
+                'Olá! Quero ver uma demonstração de como ficaria a página profissional da minha empresa.'
               )}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-extrabold text-base bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-lg w-full sm:w-auto"
             >
               <MessageCircle className="w-5 h-5" />
-              <span>Solicitar Prévia Gratuita no WhatsApp</span>
+              <span>Pedir Demonstração no WhatsApp</span>
             </a>
 
             <a
               href="#portfolio"
               className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 transition w-full sm:w-auto"
             >
-              <span>Navegar pelas Demos ao Vivo</span>
+              <span>Ver Exemplos Prontos</span>
               <ArrowRight className="w-4 h-4" />
             </a>
           </div>
@@ -121,13 +119,13 @@ export default function AgencyHomePage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-rose-400">
-              O Vazamento Invisível de Clientes
+              Onde Você Está Perdendo Clientes
             </span>
             <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-white">
-              Por que excelentes empresas locais perdem vendas todos os dias?
+              Por que ótimas empresas locais perdem vendas todos os dias?
             </h2>
             <p className="mt-3 text-slate-400 text-sm sm:text-base">
-              Você tem nota alta no Google e clientes fiéis, mas quem pesquisa pelo seu serviço hoje no bairro acaba clicando no concorrente por 3 falhas simples:
+              Mesmo tendo um excelente atendimento e clientes fiéis, quem pesquisa pelo seu serviço hoje no Google acaba indo para o concorrente por 3 motivos simples:
             </p>
           </div>
 
@@ -137,10 +135,10 @@ export default function AgencyHomePage() {
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-white">
-                1. Ficha do Google Maps sem Site Oficial
+                1. Ficha do Google sem Página Oficial
               </h3>
               <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Quando o botão &ldquo;Website&rdquo; da sua ficha está vazio ou quebrado, o algoritmo do Google reduz seu alcance local e o cliente fica inseguro antes de chamar.
+                Quando a sua empresa aparece no Google Maps sem um site próprio cadastrado, o Google mostra menos o seu negócio e o cliente fica inseguro de entrar em contato.
               </p>
             </div>
 
@@ -149,10 +147,10 @@ export default function AgencyHomePage() {
                 <Smartphone className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-white">
-                2. Depender Apenas de Instagram ou Linktree
+                2. Depender Só do Instagram
               </h3>
               <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Quem busca uma oficina, clínica ou serviço no Google tem urgência de compra. Jogar esse cliente para um feed de Instagram exige login, distrai e derruba a conversão.
+                Quem procura uma oficina, clínica ou serviço no Google tem pressa. Mandar esse cliente para o Instagram obriga a pessoa a fazer login e procurar informações soltas nos destaques.
               </p>
             </div>
 
@@ -161,24 +159,24 @@ export default function AgencyHomePage() {
                 <Zap className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-white">
-                3. Sites Antigos, Lentos e sem Rastreamento
+                3. Falta de Clareza nos Serviços
               </h3>
               <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Mais de 80% das buscas locais acontecem no celular. Se a sua página demora mais de 3 segundos para abrir ou não tem botões diretos de orçamento por serviço, o cliente fecha a aba.
+                Quase todo mundo pesquisa pelo celular. Se o cliente não encontrar em segundos o que você faz, onde você fica e um botão fácil para pedir orçamento, ele volta e clica no próximo.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. OS 3 PILARES DE ENTREGA */}
+      {/* 4. OS 3 PILARES DE ENTREGA (LINGUAGEM SIMPLES E COMERCIAL) */}
       <section id="pilares" className="py-16 md:py-24 max-w-6xl mx-auto px-4 border-b border-slate-800">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-            Nossa Metodologia
+            Como Fazemos Seu Negócio Crescer
           </span>
           <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-white">
-            Os 3 Pilares de Tração para Negócios Locais
+            Nossa Solução em 3 Passos Simples
           </h2>
         </div>
 
@@ -188,12 +186,12 @@ export default function AgencyHomePage() {
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-5">
                 <Search className="w-6 h-6" />
               </div>
-              <span className="text-xs font-bold text-emerald-400 uppercase">Pilar 01</span>
+              <span className="text-xs font-bold text-emerald-400 uppercase">Passo 01</span>
               <h3 className="text-xl font-bold text-white mt-1">
-                Posicionamento Local (Google Maps & SEO)
+                Destaque nas Buscas do Seu Bairro
               </h3>
               <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                Otimização completa do Perfil da Empresa no Google, dados estruturados (Schema.org LocalBusiness) e títulos geolocalizados no seu bairro para capturar quem já quer comprar.
+                Arrumamos toda a sua ficha no Google Maps e preparamos sua página para que moradores da sua região encontrem a sua empresa primeiro quando pesquisarem pelo seu serviço.
               </p>
             </div>
           </div>
@@ -203,12 +201,12 @@ export default function AgencyHomePage() {
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-5">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <span className="text-xs font-bold text-emerald-400 uppercase">Pilar 02</span>
+              <span className="text-xs font-bold text-emerald-400 uppercase">Passo 02</span>
               <h3 className="text-xl font-bold text-white mt-1">
-                Presença Web Mobile-First (95+ PageSpeed)
+                Página Profissional que Abre na Hora no Celular
               </h3>
               <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                Landing Pages ultrarrápidas desenhadas para celular, destacando suas melhores avaliações reais do Google e seus serviços de maior margem com botões individuais de WhatsApp.
+                Criamos uma página exclusiva com as cores da sua marca, mostrando seus principais serviços, os elogios reais dos seus clientes no Google e o mapa fácil para chegar até você.
               </p>
             </div>
           </div>
@@ -218,200 +216,173 @@ export default function AgencyHomePage() {
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-5">
                 <Bot className="w-6 h-6" />
               </div>
-              <span className="text-xs font-bold text-emerald-400 uppercase">Pilar 03</span>
+              <span className="text-xs font-bold text-emerald-400 uppercase">Passo 03</span>
               <h3 className="text-xl font-bold text-white mt-1">
-                Atendimento Ágil & Automação no WhatsApp
+                Pedidos Já Triados no Seu WhatsApp
               </h3>
               <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                Assistente de pré-atendimento interativo, catálogo digital de serviços, link na bio com Placa QR Code de balcão e relatório mensal de cliques em tempo real.
+                Em vez de receber apenas um &ldquo;Oi, tudo bem?&rdquo;, o cliente escolhe na página o serviço que deseja e a mensagem já chega pronta no seu WhatsApp, poupando o tempo do seu balcão.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. PORTFÓLIO SELECIONADO ("1 REAL + 2 CONCEITUAIS" COM LINKS DIRETOS) */}
+      {/* 5. PORTFÓLIO SELECIONADO ("1 REAL + 2 CONCEITUAIS") */}
       <section id="portfolio" className="py-16 md:py-24 bg-slate-900/40 border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-              Resultados Comprovados & Demos Interativas
+              Exemplos na Prática
             </span>
             <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-white">
-              Projetos em Produção & Demonstrações por Nicho
+              Veja Como Fica a Estrutura de Cada Tipo de Negócio
             </h2>
             <p className="mt-3 text-slate-400 text-sm sm:text-base">
-              Clique abaixo para navegar no estudo de caso real em Porto Alegre e testar ao vivo nossas 2 Demos Conceituais completas (com Site, Link na Bio, Placa QR Code e Relatório):
+              Conheça um projeto real em funcionamento em Porto Alegre e clique nos modelos demonstrativos para testar no seu celular:
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* CARD 1: CASO REAL FG MOTORS + DEMO AUTOMOTIVA */}
+            {/* CARD 1: CASO REAL FG MOTORS (SEM LINK DE PROSPECT REAL) */}
             <div className="bg-slate-900 rounded-2xl border-2 border-emerald-500/60 p-6 flex flex-col justify-between shadow-lg">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-slate-950">
-                    ⭐ Caso de Estudo Real • POA
+                    ⭐ Cliente Real • Porto Alegre
                   </span>
-                  <span className="text-xs text-slate-400">Setor Automotivo</span>
+                  <span className="text-xs text-slate-400">Oficina Mecânica</span>
                 </div>
                 <h3 className="text-2xl font-extrabold text-white">
                   FG Motors Oficina Mecânica
                 </h3>
                 <p className="mt-2 text-sm text-slate-300 leading-relaxed">
-                  Profissionalização completa de oficina em Porto Alegre: identidade visual em alta definição, tabela de serviços, SEO Local no Google Maps e captação direta no WhatsApp.
+                  Modernização completa da presença digital da oficina: visual profissional, organização clara das especialidades, ligação direta com o Google Maps e botões rápidos de orçamento por serviço.
                 </p>
                 <ul className="mt-4 space-y-2 text-xs text-slate-300">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Carregamento instantâneo Mobile-First</span>
+                    <span>Abertura imediata em qualquer celular</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Rastreamento de conversões e cliques de orçamento</span>
+                    <span>Botões de orçamento separados por serviço</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2.5">
+              <div className="mt-6 pt-4 border-t border-slate-800">
                 <a
                   href="https://fgmotorsoficina.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-extrabold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-md"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>Visitar fgmotorsoficina.com</span>
                 </a>
-                <Link
-                  href="/mello-mechanic-service"
-                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
-                >
-                  <span>Ver Demo Dark Carbono (Oficina)</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
               </div>
             </div>
 
-            {/* CARD 2: DEMO CONCEITUAL 1 — SAÚDE E BELEZA (LUMINA ODONTO) */}
+            {/* CARD 2: DEMO CONCEITUAL 1 — SAÚDE E BELEZA */}
             <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between hover:border-sky-500/50 transition">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30">
-                    Demo 1 • Saúde & Estética
+                    Modelo 1 • Saúde & Estética
                   </span>
-                  <span className="text-xs text-slate-400">Editorial Clean</span>
+                  <span className="text-xs text-slate-400">Clínicas / Consultórios</span>
                 </div>
                 <h3 className="text-xl font-bold text-white">
                   Lumina Odontologia & Harmonização
                 </h3>
                 <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                  Arquétipo Editorial Clean em Azul Oceano projetado para clínicas médicas, consultórios odontológicos e estética avançada. Inclui catálogo de tratamentos e triagem sem fila.
+                  Modelo desenhado para clínicas médicas, dentistas e estética: visual leve e elegante, apresentação dos procedimentos mais procurados e pré-agendamento sem fila no WhatsApp.
                 </p>
                 <ul className="mt-4 space-y-2 text-xs text-slate-400">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                    <span>Menu flutuante em pílula + Simulação Digital 3D</span>
+                    <span>Catálogo de tratamentos com agendamento em 1 toque</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                    <span>Assistente de Pré-Atendimento e Tabela de Tratamentos</span>
+                    <span>Destaque para depoimentos reais de pacientes</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2.5">
+              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2">
                 <Link
                   href="/lumina-odontologia-estetica"
-                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-extrabold text-xs bg-sky-500 hover:bg-sky-400 text-slate-950 transition shadow-md"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-extrabold text-xs bg-sky-500 hover:bg-sky-400 text-slate-950 transition shadow-md"
                 >
-                  <span>Abrir Demo: Lumina Odontologia</span>
+                  <span>Ver Exemplo: Clínica Odontológica</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/lumina-odontologia-estetica/bio"
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
-                  >
-                    <QrCode className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Link Bio + QR</span>
-                  </Link>
-                  <Link
-                    href="/lumina-odontologia-estetica/relatorio"
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
-                  >
-                    <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Ver Relatório</span>
-                  </Link>
-                </div>
+                <Link
+                  href="/lumina-odontologia-estetica/bio"
+                  className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                >
+                  <span>Ver Página de Atalhos para Instagram</span>
+                </Link>
               </div>
             </div>
 
-            {/* CARD 3: DEMO CONCEITUAL 2 — PET & SERVIÇOS (VILA PET) */}
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between hover:border-emerald-500/50 transition">
+            {/* CARD 3: DEMO CONCEITUAL 2 — PET & SERVIÇOS */}
+            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between hover:border-amber-500/50 transition">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                    Demo 2 • Pet & Serviços Locais
+                    Modelo 2 • Pet & Comércio Local
                   </span>
-                  <span className="text-xs text-slate-400">Bento Grid</span>
+                  <span className="text-xs text-slate-400">Pet Shop / Serviços</span>
                 </div>
                 <h3 className="text-xl font-bold text-white">
                   Vila Pet Veterinária & Estética
                 </h3>
                 <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                  Arquétipo Bento Grid Assimétrico em Verde Esmeralda e Fundo Areia: catálogo interativo de Banho & Tosa e vacinas, horários de plantão e rota rápida no Google Maps.
+                  Modelo ideal para clínicas veterinárias, pet shops, salões e comércios de bairro: tabela de serviços e preços fácil de consultar, horários de atendimento e mapa para traçar rota.
                 </p>
                 <ul className="mt-4 space-y-2 text-xs text-slate-400">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Catálogo digital com busca e preços de referência</span>
+                    <span>Tabela de serviços e pacotes com busca rápida</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Triagem rápida por nome/porte do Pet no WhatsApp</span>
+                    <span>Ficha rápida de agendamento direto para o WhatsApp</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2.5">
+              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2">
                 <Link
                   href="/vila-pet-veterinaria"
-                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-extrabold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 transition shadow-md"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-extrabold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 transition shadow-md"
                 >
-                  <span>Abrir Demo: Vila Pet Veterinária</span>
+                  <span>Ver Exemplo: Clínica Veterinária & Pet</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/vila-pet-veterinaria/bio"
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
-                  >
-                    <QrCode className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Link Bio + QR</span>
-                  </Link>
-                  <Link
-                    href="/vila-pet-veterinaria/relatorio"
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
-                  >
-                    <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Ver Relatório</span>
-                  </Link>
-                </div>
+                <Link
+                  href="/vila-pet-veterinaria/bio"
+                  className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl font-semibold text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                >
+                  <span>Ver Página de Atalhos para Instagram</span>
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. ESTRUTURA DE PACOTES (PRODUCTIZED SERVICES) */}
+      {/* 6. ESTRUTURA DE PACOTES (LINGUAGEM CLARA PARA O DONO DE NEGÓCIO) */}
       <section id="pacotes" className="py-16 md:py-24 max-w-6xl mx-auto px-4 border-b border-slate-800">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-            Planos Transparentes
+            Planos Sem Complicação
           </span>
           <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-white">
-            Escolha a Estrutura Ideal para o Momento da Sua Empresa
+            Escolha o Plano Ideal para o Momento da Sua Empresa
           </h2>
         </div>
 
@@ -420,48 +391,48 @@ export default function AgencyHomePage() {
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-7 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold uppercase text-slate-400">
-                1. Entrada
+                1. Plano de Entrada
               </span>
               <h3 className="text-2xl font-extrabold text-white mt-1">
                 Presença Local
               </h3>
               <p className="mt-2 text-xs text-slate-400">
-                Ideal para comércios pequenos que estão invisíveis no Google ou com informações desatualizadas.
+                Para negócios que querem arrumar a casa no Google Maps e facilitar o contato vindo do Instagram.
               </p>
               <div className="my-5 pt-4 border-t border-slate-800">
                 <span className="text-xs font-semibold text-emerald-400">
-                  Taxa única de setup
+                  Pagamento único de implantação
                 </span>
               </div>
               <ul className="space-y-3 text-sm text-slate-300">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Auditoria e configuração completa do Perfil no Google Maps</span>
+                  <span>Revisão e atualização completa da sua ficha no Google Maps</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Padronização profissional de fotos e horários</span>
+                  <span>Organização profissional das suas fotos, telefone e horários</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Link e Placa QR Code de balcão para coleta de avaliações</span>
+                  <span>Placa com QR Code para o balcão (para seus clientes avaliarem você no Google em 10 segundos)</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Página rápida de &ldquo;Link na Bio&rdquo; otimizada</span>
+                  <span>Página rápida de atalhos de contato para colocar no perfil do Instagram</span>
                 </li>
               </ul>
             </div>
 
             <a
               href={makeAgencyWaLink(
-                'Olá! Tenho interesse no Pacote 1 (Presença Local). Podem me passar os valores?'
+                'Olá! Tenho interesse no Plano 1 (Presença Local). Podem me passar os valores?'
               )}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-8 inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-slate-800 hover:bg-slate-700 text-white transition"
             >
-              <span>Consultar Pacote Presença Local</span>
+              <span>Consultar Plano Presença Local</span>
             </a>
           </div>
 
@@ -478,40 +449,40 @@ export default function AgencyHomePage() {
                 Estrutura Pro
               </h3>
               <p className="mt-2 text-xs text-slate-300">
-                Para empresas que buscam credibilidade imediata e captação diária de orçamentos no bairro.
+                Para empresas que querem ter um site oficial de respeito e receber pedidos de orçamento todos os dias.
               </p>
               <div className="my-5 pt-4 border-t border-slate-800">
                 <span className="text-xs font-semibold text-emerald-400">
-                  Setup inicial + Mensalidade de hospedagem e suporte
+                  Implantação + Mensalidade acessível de manutenção
                 </span>
               </div>
               <ul className="space-y-3 text-sm text-slate-200">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span><strong>Tudo do pacote Presença Local</strong></span>
+                  <span><strong>Tudo do plano Presença Local incluso</strong></span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Refinamento de Identidade Visual (Logo e Paleta de Cores)</span>
+                  <span>Site profissional completo personalizado com seu logotipo e as cores da sua empresa</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Landing Page profissional e ultrarrápida Mobile-First</span>
+                  <span>Endereço próprio na internet (ex: suaempresa.com.br) preparado para buscas no seu bairro</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Domínio próprio (.com.br) + SEO Local geolocalizado</span>
+                  <span>Apresentação dos seus principais serviços com botões diretos para o seu WhatsApp</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Botões de WhatsApp com rastreamento de cliques (GA4/GTM)</span>
+                  <span>Medidor automático que conta quantas pessoas clicaram no seu WhatsApp ou pediram rota no mapa</span>
                 </li>
               </ul>
             </div>
 
             <a
               href={makeAgencyWaLink(
-                'Olá! Quero saber mais sobre o Pacote 2 (Estrutura Pro - Carro-Chefe) para a minha empresa.'
+                'Olá! Quero saber mais sobre o Plano 2 (Estrutura Pro) para a minha empresa.'
               )}
               target="_blank"
               rel="noopener noreferrer"
@@ -526,48 +497,48 @@ export default function AgencyHomePage() {
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-7 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold uppercase text-purple-400">
-                3. Premium
+                3. Completo
               </span>
               <h3 className="text-2xl font-extrabold text-white mt-1">
                 Ecossistema & Automação
               </h3>
               <p className="mt-2 text-xs text-slate-400">
-                Para clínicas, oficinas e serviços com alto volume diário de mensagens no WhatsApp.
+                Para clínicas, oficinas e negócios que recebem muitas mensagens e querem agilizar o atendimento.
               </p>
               <div className="my-5 pt-4 border-t border-slate-800">
                 <span className="text-xs font-semibold text-purple-400">
-                  Setup inicial + Mensalidade de gestão e automação
+                  Implantação + Mensalidade com atualizações e relatórios
                 </span>
               </div>
               <ul className="space-y-3 text-sm text-slate-300">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                  <span><strong>Tudo do pacote Estrutura Pro</strong></span>
+                  <span><strong>Tudo do plano Estrutura Pro incluso</strong></span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                  <span>Automação de triagem no WhatsApp (pré-atendimento e agendamento)</span>
+                  <span>Pré-atendimento inteligente: o cliente responde 3 perguntas rápidas e já chega no seu WhatsApp com o pedido pronto</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                  <span>Catálogo digital ou tabela de serviços gerenciável</span>
+                  <span>Catálogo digital com tabela de serviços, pacotes ou preços sempre atualizada para seus clientes</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                  <span>Relatório mensal de acessos e cliques de conversão</span>
+                  <span>Resumo mensal enviado no seu WhatsApp mostrando quantos clientes vieram pelo site e quais serviços mais procuraram</span>
                 </li>
               </ul>
             </div>
 
             <a
               href={makeAgencyWaLink(
-                'Olá! Tenho interesse no Pacote 3 (Ecossistema & Automação). Como funciona?'
+                'Olá! Tenho interesse no Plano 3 (Ecossistema & Automação). Como funciona?'
               )}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-8 inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-slate-800 hover:bg-slate-700 text-white transition"
             >
-              <span>Consultar Ecossistema Premium</span>
+              <span>Consultar Plano Ecossistema</span>
             </a>
           </div>
         </div>
@@ -578,52 +549,47 @@ export default function AgencyHomePage() {
         <div className="flex items-center justify-center gap-2 mb-10">
           <HelpCircle className="w-6 h-6 text-emerald-400" />
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white text-center">
-            Perguntas Frequentes
+            Dúvidas Comuns
           </h2>
         </div>
 
         <div className="space-y-4">
           <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
             <h3 className="font-bold text-base text-white">
-              1. Quanto tempo demora para o site da minha empresa ficar pronto?
+              1. Quanto tempo demora para a página da minha empresa ficar pronta?
             </h3>
             <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-              Graças ao nosso motor de Onboarding Inteligente (que já importa 80% dos seus dados públicos do Google Maps), entregamos a sua estrutura oficial no ar em até 72 horas após a confirmação dos dados.
+              Nós mesmos buscamos as informações públicas da sua empresa no Google e montamos toda a estrutura. Após você confirmar os dados pelo WhatsApp, entregamos tudo no ar em até 72 horas.
             </p>
           </div>
 
           <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
             <h3 className="font-bold text-base text-white">
-              2. Eu preciso entender de tecnologia ou programação para manter o site?
+              2. Eu preciso mexer em computador ou entender de internet para manter o site?
             </h3>
             <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-              Zero. Nós cuidamos de toda a configuração de domínio, hospedagem de alta velocidade, certificados de segurança e atualizações. Sempre que precisar alterar um horário, foto ou serviço, basta nos mandar uma mensagem no WhatsApp.
+              De jeito nenhum. Nossa equipe cuida de tudo. Sempre que você quiser mudar um horário, trocar uma foto ou atualizar um serviço, basta nos mandar uma mensagem no WhatsApp que nós atualizamos para você.
             </p>
           </div>
 
           <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
             <h3 className="font-bold text-base text-white">
-              3. Como eu sei se o site realmente está trazendo clientes?
+              3. Como eu sei se a página realmente está trazendo clientes?
             </h3>
             <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-              Todos os botões da sua página possuem rastreamento de conversão e um painel de Relatório Mensal em tempo real. Você sabe exatamente quantos cliques de orçamento e quantas rotas no Google Maps a página gerou.
+              Quando o cliente clica na sua página, a mensagem já chega identificada no seu WhatsApp (ex: &ldquo;Olá! Vi o site da empresa e quero orçamento para...&rdquo;) e você ainda conta com o acompanhamento de quantos cliques cada botão recebeu.
             </p>
           </div>
         </div>
       </section>
 
-      {/* 8. FOOTER */}
+      {/* 8. FOOTER (SEM LINK PÚBLICO PARA O PAINEL) */}
       <footer className="bg-slate-950 border-t border-slate-900 py-10 text-center text-xs text-slate-500">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-bold text-slate-300">
-            Tração Local • Agência de Presença Digital & Automação em Porto Alegre/RS
+            Tração Local • Posicionamento Digital & Vendas Locais em Porto Alegre/RS
           </p>
-          <div className="flex items-center gap-4">
-            <Link href="/painel" className="text-slate-600 hover:text-slate-400 transition">
-              Painel Operacional (SDR)
-            </Link>
-            <span>© 2026</span>
-          </div>
+          <span>© {new Date().getFullYear()} • Todos os direitos reservados</span>
         </div>
       </footer>
     </div>

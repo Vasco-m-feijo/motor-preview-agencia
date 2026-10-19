@@ -24,12 +24,17 @@ import {
   Tag,
   Plus,
   Trash2,
+  Lock,
+  LogOut,
 } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+// Defina sua senha mestra aqui ou na variável NEXT_PUBLIC_ADMIN_PASSWORD na Vercel
+const ADMIN_MASTER_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'tracao2026';
 
 const STATUS_OPTIONS = [
   'Novo',
@@ -61,11 +66,16 @@ const PALETTE_OPTIONS = [
 ];
 
 export default function AgencyDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState(false);
+
   const [leads, setLeads] = useState<any[]>([]);
   const [clickCounts, setClickCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('Todos');
-  const [openBriefingSlug, setOpenBriefingSlug] = useState<string | null>(null);
+
+  const [openBriefingFormSlug, setOpenBriefingFormSlug] = useState<string | null>(null);
   const [openProposalSlug, setOpenProposalSlug] = useState<string | null>(null);
   const [openProConfigSlug, setOpenProConfigSlug] = useState<string | null>(null);
   const [openEcoConfigSlug, setOpenEcoConfigSlug] = useState<string | null>(null);
@@ -77,6 +87,7 @@ export default function AgencyDashboard() {
     hero_image_url: '',
     google_review_url: '',
     ga4_id: '',
+    client_pin: '',
   });
 
   const [ecoForm, setEcoForm] = useState<{
@@ -88,6 +99,49 @@ export default function AgencyDashboard() {
     custom_question: 'Algum detalhe adicional? (Ex: modelo do veículo ou dúvida)',
     catalog: [],
   });
+
+  // Estado para o Formulário Interno de Onboarding/Briefing (Substitui a antiga página pública)
+  const [briefingForm, setBriefingForm] = useState({
+    q1_name: '',
+    q1_cnpj: '',
+    q1_address: '',
+    q2_phone: '',
+    q2_hours: '',
+    q3_services: '',
+    q4_objection: '',
+    q5_differential: '',
+    q6_audience: '',
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('agencia_admin_auth');
+      if (saved === ADMIN_MASTER_PASS) {
+        setIsAuthenticated(true);
+        fetchLeads();
+      } else {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (passwordInput.trim() === ADMIN_MASTER_PASS) {
+      localStorage.setItem('agencia_admin_auth', ADMIN_MASTER_PASS);
+      setIsAuthenticated(true);
+      setAuthError(false);
+      fetchLeads();
+    } else {
+      setAuthError(true);
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('agencia_admin_auth');
+    setIsAuthenticated(false);
+    setPasswordInput('');
+  }
 
   async function fetchLeads() {
     setLoading(true);
@@ -114,10 +168,6 @@ export default function AgencyDashboard() {
 
     setLoading(false);
   }
-
-  useEffect(() => {
-    fetchLeads();
-  }, []);
 
   async function updateLeadStatus(slug: string, newStatus: string) {
     setLeads((prev) =>
@@ -156,19 +206,119 @@ export default function AgencyDashboard() {
     setSavingThemeSlug(null);
   }
 
+  function toggleBriefingDrawer(lead: any) {
+    if (openBriefingFormSlug === lead.slug) {
+      setOpenBriefingFormSlug(null);
+      return;
+    }
+    setOpenProConfigSlug(null);
+    setOpenEcoConfigSlug(null);
+
+    const biz = lead.business_data || {};
+    const config = lead.site_config || {};
+    const savedAnswers = lead.briefing_data?.answers || {};
+
+    const defaultServices = (config.services || [])
+      .map((s: any) => s.title)
+      .join('\n');
+    const defaultHours = (biz.opening_hours || config.location?.opening_hours || []).join('\n');
+
+    setBriefingForm({
+      q1_name: savedAnswers.q1_name || biz.name || '',
+      q1_cnpj: savedAnswers.q1_cnpj || '',
+      q1_address: savedAnswers.q1_address || biz.address || '',
+      q2_phone: savedAnswers.q2_phone || biz.phone || '',
+      q2_hours: savedAnswers.q2_hours || defaultHours,
+      q3_services: savedAnswers.q3_services || defaultServices,
+      q4_objection:
+        savedAnswers.q4_objection ||
+        'Garantia no serviço, transparência no orçamento prévio e cumprimento do prazo.',
+      q5_differential:
+        savedAnswers.q5_differential ||
+        lead.ai_battlecard?.ponto_elogio ||
+        'Atendimento direto e honesto.',
+      q6_audience:
+        savedAnswers.q6_audience ||
+        `Moradores e clientes da região (${biz.address || 'Porto Alegre'}).`,
+    });
+
+    setOpenBriefingFormSlug(lead.slug);
+  }
+
+  async function saveInternalBriefing(lead: any) {
+    setSavingThemeSlug(lead.slug);
+    const biz = lead.business_data || {};
+
+    const compiledMd = `# BRIEFING OFICIAL DE PRODUÇÃO — ${briefingForm.q1_name}
+- **Slug:** ${lead.slug}
+- **Categoria:** ${biz.category}
+- **Nota Google:** ${biz.rating} (${biz.reviews_count} avaliações)
+
+## 1. Dados Oficiais
+- **Nome Oficial:** ${briefingForm.q1_name}
+- **CNPJ:** ${briefingForm.q1_cnpj || 'Não informado'}
+- **Endereço:** ${briefingForm.q1_address}
+
+## 2. Atendimento e Horários
+- **WhatsApp Principal:** ${briefingForm.q2_phone}
+- **Horários:**
+${briefingForm.q2_hours}
+
+## 3. Serviços de Maior Margem / Foco de Vendas
+${briefingForm.q3_services}
+
+## 4. Principal Dúvida ou Receio do Cliente (Quebra de Objeção)
+${briefingForm.q4_objection}
+
+## 5. Diferencial Competitivo no Bairro
+${briefingForm.q5_differential}
+
+## 6. Perfil do Público
+${briefingForm.q6_audience}
+`;
+
+    const updatedBriefingData = {
+      answers: briefingForm,
+      briefing_md: compiledMd,
+      updated_at: new Date().toISOString(),
+    };
+
+    await supabase
+      .from('leads_pipeline')
+      .update({
+        briefing_data: updatedBriefingData,
+        status: 'Em Produção',
+      })
+      .eq('slug', lead.slug);
+
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.slug === lead.slug
+          ? { ...l, briefing_data: updatedBriefingData, status: 'Em Produção' }
+          : l
+      )
+    );
+
+    setSavingThemeSlug(null);
+    alert('Briefing salvo com sucesso e status alterado para Em Produção! Agora você pode rodar o fluxo de Refinamento no n8n.');
+  }
+
   function toggleProConfigDrawer(lead: any) {
     if (openProConfigSlug === lead.slug) {
       setOpenProConfigSlug(null);
       return;
     }
     setOpenEcoConfigSlug(null);
+    setOpenBriefingFormSlug(null);
     const brand = lead.site_config?.brand || {};
+    const cleanPhone = (lead.business_data?.phone || '').toString().replace(/\D/g, '');
     setProForm({
       custom_domain: lead.custom_domain || '',
       logo_url: brand.logo_url || '',
       hero_image_url: brand.hero_image_url || '',
       google_review_url: brand.google_review_url || '',
       ga4_id: brand.ga4_id || '',
+      client_pin: brand.client_pin || cleanPhone.slice(-4) || '1234',
     });
     setOpenProConfigSlug(lead.slug);
   }
@@ -179,6 +329,7 @@ export default function AgencyDashboard() {
       return;
     }
     setOpenProConfigSlug(null);
+    setOpenBriefingFormSlug(null);
     const triage = lead.site_config?.triage || {};
     const catalog = lead.site_config?.catalog || [];
     setEcoForm({
@@ -209,6 +360,7 @@ export default function AgencyDashboard() {
         hero_image_url: proForm.hero_image_url.trim(),
         google_review_url: proForm.google_review_url.trim(),
         ga4_id: proForm.ga4_id.trim(),
+        client_pin: proForm.client_pin.trim(),
       },
     };
 
@@ -263,18 +415,18 @@ export default function AgencyDashboard() {
     alert('Catálogo Digital e Triagem de WhatsApp salvos com sucesso!');
   }
 
+  // FECHAMENTO SEGURO VIA WHATSAPP (Sem link público vulnerável)
   function handleOneClickClose(lead: any) {
     const biz = lead.business_data || {};
     const phone = (biz.phone || '').replace(/\D/g, '');
-    const origin =
-      typeof window !== 'undefined'
-        ? window.location.origin
-        : 'https://motor-preview-agencia.vercel.app';
-    const onboardingLink = `${origin}/onboarding/${lead.slug}`;
+    const servicesList = (lead.site_config?.services || [])
+      .map((s: any) => `• ${s.title}`)
+      .join('\n');
 
     updateLeadStatus(lead.slug, 'Fechado');
 
-    const closeMsg = `Perfeito, equipe da ${biz.short_name || biz.name}! Vamos iniciar a configuração oficial do site de vocês.\n\nPara agilizar o seu tempo, já deixei 80% do cadastro preenchido com os dados da empresa. Basta revisar e confirmar neste link:\n${onboardingLink}`;
+    const closeMsg = `Perfeito, equipe da *${biz.short_name || biz.name}*! Vamos iniciar a configuração oficial da página de vocês. 🚀\n\nPara você não ter trabalho preenchendo formulários, já separei aqui os dados que coletamos no Google. Basta me responder aqui mesmo no WhatsApp se estiver tudo certo ou se quer ajustar algum ponto:\n\n📍 *Endereço:* ${biz.address}\n📞 *WhatsApp de Atendimento:* ${biz.phone}\n🛠️ *Serviços em Destaque:*\n${servicesList}\n\n1️⃣ Vocês querem adicionar ou trocar algum desses serviços principais?\n2️⃣ Caso queiram colocar a Logo e 1 foto da fachada/equipe, podem me enviar a imagem por aqui mesmo!`;
+
     window.open(
       `https://wa.me/${phone}?text=${encodeURIComponent(closeMsg)}`,
       '_blank'
@@ -289,34 +441,81 @@ export default function AgencyDashboard() {
         ? window.location.origin
         : 'https://motor-preview-agencia.vercel.app';
 
-    return `📋 *PROPOSTA DE PRESENÇA DIGITAL — ${(biz.name || '').toUpperCase()}*
+    return `📋 *PROPOSTA DE ESTRUTURA DIGITAL — ${(biz.name || '').toUpperCase()}*
 
-🔍 *Diagnóstico Atual:* ${biz.diagnosis || 'Ausência de site oficial vinculado ao Google Maps'}
-⭐ *Reputação Verificada:* Nota ${biz.rating} (${biz.reviews_count} avaliações no Google)
-🔗 *Prévia Exclusiva:* ${origin}/${lead.slug}
-📲 *Link na Bio + Placa QR Code:* ${origin}/${lead.slug}/bio
-📊 *Painel de Relatório Mensal:* ${origin}/${lead.slug}/relatorio
+🔍 *Situação Atual:* ${biz.diagnosis || 'Ausência de página oficial no Google Maps'}
+⭐ *Avaliação no Google:* Nota ${biz.rating} (${biz.reviews_count} avaliações de clientes)
+🔗 *Demonstração da Página:* ${origin}/${lead.slug}
+📲 *Atalhos para o Instagram:* ${origin}/${lead.slug}/bio
 
 ---
-📦 *OPÇÕES DE PACOTES:*
+📦 *OPÇÕES DE PLANOS:*
 
 *1. Presença Local (Entrada)*
-• Configuração e otimização completa do Perfil no Google Maps
-• Padronização de horários, fotos e Placa QR Code de avaliações no balcão
-• Página rápida de "Link na Bio" para o Instagram
+• Revisão e atualização completa da sua ficha no Google Maps
+• Padronização de horários, fotos e Placa com QR Code de balcão para clientes avaliarem você no Google
+• Página prática de atalhos para colocar no perfil do Instagram
 
-*2. Estrutura Pro (Carro-Chefe Recomendado)*
-• Tudo do pacote Presença Local
-• Landing Page Profissional Mobile-First de Alta Conversão
-• Identidade visual com Logo e Cores da sua marca + Domínio próprio (.com.br)
-• SEO Local geolocalizado + Rastreamento de cliques no WhatsApp (GA4)
+*2. Estrutura Pro (Mais Escolhido)*
+• Tudo do plano Presença Local incluso
+• Site profissional completo com o seu logotipo e as cores da sua marca
+• Endereço próprio na internet (.com.br) preparado para buscas no seu bairro
+• Botões de orçamento por serviço direto no WhatsApp + Medidor de cliques
 
-*3. Ecossistema & Automação (Premium)*
-• Tudo do pacote Estrutura Pro
-• Assistente de Triagem e Pré-Atendimento Automático para WhatsApp
-• Catálogo Digital / Tabela de Preços Gerenciável + Relatório Mensal de Cliques
+*3. Ecossistema & Automação (Completo)*
+• Tudo do plano Estrutura Pro incluso
+• Pré-atendimento rápido: o cliente responde 3 perguntas no site e já chega no seu WhatsApp dizendo exatamente o que precisa
+• Catálogo digital de serviços e preços + Resumo mensal de resultados no seu WhatsApp
 
-💡 *Recomendação Estratégica:* ${bc.pacote_recomendado || '2. Estrutura Pro'}`;
+💡 *Plano Recomendado:* ${bc.pacote_recomendado || '2. Estrutura Pro'}`;
+  }
+
+  // =========================================================================
+  // TELA DE LOGIN EXCLUSIVA DO /PAINEL
+  // =========================================================================
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 font-sans">
+        <form
+          onSubmit={handleLogin}
+          className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+            <Lock className="w-7 h-7" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
+              Acesso Restrito
+            </span>
+            <h1 className="text-2xl font-extrabold mt-1">Central da Agência</h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Digite sua Senha Mestra para acessar o pipeline de leads e controles dos sites:
+            </p>
+          </div>
+
+          <input
+            type="password"
+            placeholder="Sua senha mestra..."
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-center text-sm font-bold text-white"
+          />
+
+          {authError && (
+            <p className="text-xs text-rose-400 font-semibold">
+              Senha incorreta. Tente novamente.
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition cursor-pointer"
+          >
+            Entrar no Painel
+          </button>
+        </form>
+      </div>
+    );
   }
 
   const filteredLeads =
@@ -332,23 +531,32 @@ export default function AgencyDashboard() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold mb-2 border border-emerald-500/30">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Fábrica Autônoma • Central Completa (3 Pacotes Ativos)</span>
+              <span>Painel Protegido • Central Completa da Agência</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
-              Pipeline de Leads, Estúdio Visual & Automação
+              Pipeline de Leads, Estúdio Visual & Entregas
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Gerencie os pacotes Presença Local, Estrutura Pro e Ecossistema & Automação em uma única tela.
+              Acesso exclusivo autenticado. Gerencie abordagens, cores, Placa QR Code, Relatórios e Briefings internos.
             </p>
           </div>
 
-          <button
-            onClick={fetchLeads}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-semibold transition cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Atualizar Lista</span>
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={fetchLeads}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Atualizar</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold transition cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
 
         {/* Filtro de Status */}
@@ -385,13 +593,16 @@ export default function AgencyDashboard() {
               const briefingMd = lead.briefing_data?.briefing_md;
               const currentTheme = lead.site_config?.theme || {};
               const totalClicks = clickCounts[lead.slug] || 0;
+              const cleanPhone = (biz.phone || '').toString().replace(/\D/g, '');
+              const clientPin =
+                lead.site_config?.brand?.client_pin || cleanPhone.slice(-4) || '1234';
 
               return (
                 <div
                   key={lead.id || lead.slug}
                   className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-6 space-y-5"
                 >
-                  {/* Linha 1: Nome, Nota, Cliques e Atalhos dos 3 Pacotes */}
+                  {/* Linha 1: Nome, Nota, Cliques, PIN do Cliente e Atalhos */}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                       <div className="flex items-center gap-2.5 flex-wrap">
@@ -405,6 +616,9 @@ export default function AgencyDashboard() {
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <MousePointerClick className="w-3.5 h-3.5" />
                           {totalClicks} cliques
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                          🔑 PIN Cliente: {clientPin}
                         </span>
                         {lead.custom_domain && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -435,8 +649,18 @@ export default function AgencyDashboard() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 transition"
                       >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Link Bio</span>
+                      </a>
+
+                      <a
+                        href={`/${lead.slug}/bio?placa=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition"
+                      >
                         <QrCode className="w-3.5 h-3.5" />
-                        <span>Bio + QR</span>
+                        <span>Placa QR</span>
                       </a>
 
                       <a
@@ -448,6 +672,14 @@ export default function AgencyDashboard() {
                         <BarChart3 className="w-3.5 h-3.5" />
                         <span>Relatório</span>
                       </a>
+
+                      <button
+                        onClick={() => toggleBriefingDrawer(lead)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition cursor-pointer"
+                      >
+                        <ClipboardCheck className="w-3.5 h-3.5" />
+                        <span>Briefing Interno</span>
+                      </button>
 
                       <button
                         onClick={() => toggleProConfigDrawer(lead)}
@@ -462,7 +694,7 @@ export default function AgencyDashboard() {
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition cursor-pointer"
                       >
                         <Tag className="w-3.5 h-3.5" />
-                        <span>Ecossistema & Catálogo</span>
+                        <span>Catálogo</span>
                       </button>
 
                       <select
@@ -544,6 +776,146 @@ export default function AgencyDashboard() {
                     </div>
                   </div>
 
+                  {/* GAVETA INTERNA: ONBOARDING / BRIEFING (PROTEGIDO NO PAINEL) */}
+                  {openBriefingFormSlug === lead.slug && (
+                    <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-4 border border-blue-500/40">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-blue-400">
+                            📋 Onboarding Interno Seguro (Apenas Você Edita)
+                          </span>
+                          <h3 className="text-base font-bold mt-0.5">
+                            Revisar Dados do Cliente e Gerar briefing.md para o n8n
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => saveInternalBriefing(lead)}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs cursor-pointer"
+                        >
+                          <Save className="w-4 h-4" />
+                          <span>Salvar Briefing e Enviar p/ Produção</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            Nome Oficial da Empresa
+                          </label>
+                          <input
+                            type="text"
+                            value={briefingForm.q1_name}
+                            onChange={(e) =>
+                              setBriefingForm({ ...briefingForm, q1_name: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            CNPJ (Opcional - Rodapé)
+                          </label>
+                          <input
+                            type="text"
+                            value={briefingForm.q1_cnpj}
+                            onChange={(e) =>
+                              setBriefingForm({ ...briefingForm, q1_cnpj: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            WhatsApp Oficial (com DDD)
+                          </label>
+                          <input
+                            type="text"
+                            value={briefingForm.q2_phone}
+                            onChange={(e) =>
+                              setBriefingForm({ ...briefingForm, q2_phone: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                        <div className="md:col-span-3">
+                          <label className="font-bold text-slate-300 block mb-1">
+                            Endereço Completo
+                          </label>
+                          <input
+                            type="text"
+                            value={briefingForm.q1_address}
+                            onChange={(e) =>
+                              setBriefingForm({ ...briefingForm, q1_address: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            Serviços de Maior Lucro (1 por linha)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={briefingForm.q3_services}
+                            onChange={(e) =>
+                              setBriefingForm({ ...briefingForm, q3_services: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            Horários de Atendimento (1 por linha)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={briefingForm.q2_hours}
+                            onChange={(e) =>
+                              setBriefingForm({ ...briefingForm, q2_hours: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            Principal Dúvida / Diferencial
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={briefingForm.q4_objection}
+                            onChange={(e) =>
+                              setBriefingForm({ ...briefingForm, q4_objection: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {briefingMd && (
+                        <div className="pt-3 border-t border-slate-800">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[11px] font-bold uppercase text-emerald-400">
+                              Documento briefing.md salvo no banco:
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(briefingMd);
+                                alert('briefing.md copiado!');
+                              }}
+                              className="text-xs text-slate-300 hover:text-white underline cursor-pointer"
+                            >
+                              Copiar Texto
+                            </button>
+                          </div>
+                          <pre className="bg-slate-950 p-3 rounded-xl text-[11px] text-emerald-200 whitespace-pre-wrap max-h-40 overflow-y-auto">
+                            {briefingMd}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* GAVETA 1: CONFIGURAÇÃO DO PACOTE ESTRUTURA PRO */}
                   {openProConfigSlug === lead.slug && (
                     <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-4 border border-slate-800">
@@ -553,7 +925,7 @@ export default function AgencyDashboard() {
                             ⚙️ Entrega Técnica • Pacote 2: Estrutura Pro
                           </span>
                           <h3 className="text-base font-bold mt-0.5">
-                            Domínio Próprio (.com.br), Logo Oficial, Foto de Capa & GA4
+                            Domínio Próprio (.com.br), Logo Oficial, Foto de Capa & PIN do Cliente
                           </h3>
                         </div>
                         <button
@@ -629,9 +1001,24 @@ export default function AgencyDashboard() {
                           />
                         </div>
 
-                        <div className="md:col-span-2">
+                        <div>
                           <label className="font-bold text-slate-300 block mb-1">
-                            5. ID do Google Analytics 4 (Opcional — ex: G-XXXXXXXXXX)
+                            5. PIN de Acesso do Cliente ao Relatório (4 dígitos)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="1234"
+                            value={proForm.client_pin}
+                            onChange={(e) =>
+                              setProForm({ ...proForm, client_pin: e.target.value })
+                            }
+                            className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-emerald-400 font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-slate-300 block mb-1">
+                            6. ID do Google Analytics (Opcional — G-XXXXXXXXXX)
                           </label>
                           <input
                             type="text"
@@ -656,7 +1043,7 @@ export default function AgencyDashboard() {
                             🚀 Entrega Técnica • Pacote 3: Ecossistema & Automação
                           </span>
                           <h3 className="text-base font-bold mt-0.5">
-                            Assistente de Triagem no WhatsApp & Catálogo Digital de Preços
+                            Pré-Atendimento no WhatsApp & Catálogo Digital de Preços
                           </h3>
                         </div>
                         <button
@@ -668,7 +1055,6 @@ export default function AgencyDashboard() {
                         </button>
                       </div>
 
-                      {/* Controle da Triagem */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
                         <div className="md:col-span-4 flex items-center gap-2.5">
                           <input
@@ -683,7 +1069,7 @@ export default function AgencyDashboard() {
                             className="w-4 h-4 rounded cursor-pointer"
                           />
                           <span className="font-bold text-white">
-                            Ativar Assistente de Pré-Atendimento no Site
+                            Ativar Pré-Atendimento no Site
                           </span>
                         </div>
                         <div className="md:col-span-8">
@@ -704,7 +1090,6 @@ export default function AgencyDashboard() {
                         </div>
                       </div>
 
-                      {/* Editor do Catálogo / Tabela de Preços */}
                       <div className="space-y-3 text-xs">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-slate-300 uppercase">
@@ -735,7 +1120,7 @@ export default function AgencyDashboard() {
 
                         {ecoForm.catalog.length === 0 ? (
                           <p className="text-slate-400 py-3">
-                            Nenhum item cadastrado na tabela de preços ainda. Clique em &ldquo;Adicionar Item ao Catálogo&rdquo; para criar.
+                            Nenhum item cadastrado na tabela de preços ainda.
                           </p>
                         ) : (
                           <div className="space-y-2.5">
@@ -746,7 +1131,7 @@ export default function AgencyDashboard() {
                               >
                                 <input
                                   type="text"
-                                  placeholder="Categoria (ex: Revisão)"
+                                  placeholder="Categoria"
                                   value={item.category}
                                   onChange={(e) => {
                                     const next = [...ecoForm.catalog];
@@ -757,7 +1142,7 @@ export default function AgencyDashboard() {
                                 />
                                 <input
                                   type="text"
-                                  placeholder="Nome do Serviço / Produto"
+                                  placeholder="Nome do Serviço"
                                   value={item.title}
                                   onChange={(e) => {
                                     const next = [...ecoForm.catalog];
@@ -768,7 +1153,7 @@ export default function AgencyDashboard() {
                                 />
                                 <input
                                   type="text"
-                                  placeholder="Preço (ex: R$ 180 ou Sob consulta)"
+                                  placeholder="Preço"
                                   value={item.price}
                                   onChange={(e) => {
                                     const next = [...ecoForm.catalog];
@@ -842,7 +1227,7 @@ export default function AgencyDashboard() {
                     </div>
                   </div>
 
-                  {/* Linha 3: Botões de Cadência SDR + Fechamento de 1 Clique */}
+                  {/* Linha 3: Botões de Cadência SDR + Fechamento via WhatsApp */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                     <div className="flex flex-wrap items-center gap-2">
                       {links.link_1_icebreaker && (
@@ -914,26 +1299,12 @@ export default function AgencyDashboard() {
                         <span>Rascunho de Proposta</span>
                       </button>
 
-                      {briefingMd && (
-                        <button
-                          onClick={() =>
-                            setOpenBriefingSlug(
-                              openBriefingSlug === lead.slug ? null : lead.slug
-                            )
-                          }
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition cursor-pointer"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>Ver briefing.md</span>
-                        </button>
-                      )}
-
                       <button
                         onClick={() => handleOneClickClose(lead)}
                         className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold bg-slate-900 hover:bg-slate-800 text-white transition cursor-pointer"
                       >
                         <Rocket className="w-4 h-4 text-emerald-400" />
-                        <span>Fechar Negócio (1 Clique)</span>
+                        <span>Fechar Negócio (Pedir Dados no WhatsApp)</span>
                       </button>
                     </div>
                   </div>
@@ -943,7 +1314,7 @@ export default function AgencyDashboard() {
                     <div className="mt-4 bg-slate-900 text-slate-100 p-5 rounded-xl text-xs space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-emerald-400 uppercase">
-                          Rascunho de Proposta Comercial (Pronto para WhatsApp)
+                          Rascunho de Proposta Comercial (Linguagem Simples p/ WhatsApp)
                         </span>
                         <button
                           onClick={() => {
@@ -960,30 +1331,6 @@ export default function AgencyDashboard() {
                       </div>
                       <pre className="whitespace-pre-wrap font-sans leading-relaxed text-slate-200">
                         {generateProposalText(lead)}
-                      </pre>
-                    </div>
-                  )}
-
-                  {/* Gaveta: Documento briefing.md Preenchido */}
-                  {openBriefingSlug === lead.slug && briefingMd && (
-                    <div className="mt-4 bg-emerald-950 text-emerald-50 p-5 rounded-xl text-xs space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-emerald-300 uppercase">
-                          Briefing Oficial Recebido (briefing.md)
-                        </span>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(briefingMd);
-                            alert('briefing.md copiado!');
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold cursor-pointer"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Copiar briefing.md</span>
-                        </button>
-                      </div>
-                      <pre className="whitespace-pre-wrap font-mono leading-relaxed text-emerald-100">
-                        {briefingMd}
                       </pre>
                     </div>
                   )}
