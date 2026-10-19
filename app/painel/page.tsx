@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
@@ -460,7 +460,7 @@ ${briefingForm.q6_audience}
     const bc = lead.ai_battlecard || {};
     const origin =
       typeof window !== 'undefined'
-        ? window.location.origin
+        ? 'https://motor-preview-agencia.vercel.app'
         : 'https://motor-preview-agencia.vercel.app';
 
     return `📋 *PROPOSTA DE ESTRUTURA DIGITAL — ${(biz.name || '').toUpperCase()}*
@@ -656,7 +656,7 @@ ${briefingForm.q6_audience}
 
                     <div className="flex flex-wrap items-center gap-2">
                       <a
-                        href={`/${lead.slug}`}
+                        href={`https://motor-preview-agencia.vercel.app/${lead.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition"
@@ -666,7 +666,7 @@ ${briefingForm.q6_audience}
                       </a>
 
                       <a
-                        href={`/${lead.slug}/bio`}
+                        href={`https://motor-preview-agencia.vercel.app/${lead.slug}/bio`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 transition"
@@ -686,7 +686,7 @@ ${briefingForm.q6_audience}
                       </a>
 
                       <a
-                        href={`/${lead.slug}/relatorio`}
+                        href={`https://motor-preview-agencia.vercel.app/${lead.slug}/relatorio?key=tl2026`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition"
@@ -1270,7 +1270,7 @@ ${briefingForm.q6_audience}
                           href={links.link_2_demo.replace(
                             'https://preview.suaagencia.com.br',
                             typeof window !== 'undefined'
-                              ? window.location.origin
+                              ? 'https://motor-preview-agencia.vercel.app'
                               : 'https://motor-preview-agencia.vercel.app'
                           )}
                           target="_blank"
