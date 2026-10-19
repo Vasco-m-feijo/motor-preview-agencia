@@ -589,7 +589,7 @@ export default function AgencyHomePage() {
           <p className="font-bold text-slate-300">
             Tração Local • Posicionamento Digital & Vendas Locais em Porto Alegre/RS
           </p>
-          <span>© {new Date().getFullYear()} • Todos os direitos reservados</span>
+          <span>© 2026 • Todos os direitos reservados</span>
         </div>
       </footer>
     </div>
