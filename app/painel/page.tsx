@@ -416,16 +416,38 @@ ${briefingForm.q6_audience}
   }
 
   // FECHAMENTO SEGURO VIA WHATSAPP (Sem link público vulnerável)
+  // FECHAMENTO 1 CLIQUE COM SEU GOOGLE FORMS PRÉ-PREENCHIDO (80% AUTOMÁTICO)
   function handleOneClickClose(lead: any) {
     const biz = lead.business_data || {};
+    const site = lead.site_config || {};
+    const battlecard = lead.ai_battlecard || {};
     const phone = (biz.phone || '').replace(/\D/g, '');
-    const servicesList = (lead.site_config?.services || [])
-      .map((s: any) => `• ${s.title}`)
+
+    const servicesText = (site.services || [])
+      .map((s: any, i: number) => `${i + 1}. ${s.title}: ${s.description}`)
       .join('\n');
+
+    const hoursText = (biz.opening_hours || []).join(' | ');
+
+    const GOOGLE_FORM_BASE_URL =
+      'https://docs.google.com/forms/d/e/1FAIpQLSeVn7ofDR0VzsI0R8_PIQfyxqjnb1FCbd_Q8A7F2WbdATQm0g/viewform';
+
+    const params = new URLSearchParams({
+      'usp': 'pp_url',
+      'entry.1516817855': lead.slug || '',
+      'entry.610559193': biz.name || '',
+      'entry.437486822': biz.address || '',
+      'entry.813012857': biz.phone || '',
+      'entry.1080789833': hoursText || '',
+      'entry.908886294': servicesText || '',
+      'entry.491895917': battlecard.ponto_elogio || '',
+    });
+
+    const prefilledFormUrl = `${GOOGLE_FORM_BASE_URL}?${params.toString()}`;
 
     updateLeadStatus(lead.slug, 'Fechado');
 
-    const closeMsg = `Perfeito, equipe da *${biz.short_name || biz.name}*! Vamos iniciar a configuração oficial da página de vocês. 🚀\n\nPara você não ter trabalho preenchendo formulários, já separei aqui os dados que coletamos no Google. Basta me responder aqui mesmo no WhatsApp se estiver tudo certo ou se quer ajustar algum ponto:\n\n📍 *Endereço:* ${biz.address}\n📞 *WhatsApp de Atendimento:* ${biz.phone}\n🛠️ *Serviços em Destaque:*\n${servicesList}\n\n1️⃣ Vocês querem adicionar ou trocar algum desses serviços principais?\n2️⃣ Caso queiram colocar a Logo e 1 foto da fachada/equipe, podem me enviar a imagem por aqui mesmo!`;
+    const closeMsg = `Perfeito, equipe da *${biz.short_name || biz.name}*! Vamos iniciar a configuração oficial da estrutura digital de vocês. 🚀\n\nPara poupar o seu tempo, já deixei 80% do nosso formulário oficial preenchido com os dados da empresa. Basta abrir o link abaixo, revisar se deseja alterar algum detalhe e clicar em *Enviar*:\n\n👉 ${prefilledFormUrl}`;
 
     window.open(
       `https://wa.me/${phone}?text=${encodeURIComponent(closeMsg)}`,

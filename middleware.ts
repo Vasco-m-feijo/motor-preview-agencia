@@ -10,24 +10,20 @@ export async function middleware(req: NextRequest) {
   const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
 
   // =========================================================================
-  // 1. DESVINCULAR O /painel DA WEB PÚBLICA (SÓ ABRE NO SEU COMPUTADOR LOCAL)
+  // 1. DESVINCULAR /painel E /onboarding DA INTERNET PÚBLICA
   // =========================================================================
-  if (url.pathname.startsWith('/painel')) {
+  if (url.pathname.startsWith('/painel') || url.pathname.startsWith('/onboarding')) {
     if (isLocalhost) {
-      return NextResponse.next(); // No seu PC (localhost:3000/painel) abre livremente
+      return NextResponse.next(); // No seu computador (localhost:3000/painel) abre normalmente
     }
-    // Na internet pública (Vercel), finge que a página nem existe (404)
+    // Na Vercel (internet pública), retorna 404 como se a página não existisse
     return new NextResponse('404 - Página não encontrada', { status: 404 });
   }
 
   // =========================================================================
-  // 2. PROTEGER /relatorio E /onboarding CONTRA CURIOSOS NA WEB
+  // 2. PROTEGER /relatorio CONTRA ACESSO SEM CHAVE NA WEB PÚBLICA
   // =========================================================================
-  const isReportOrOnboarding =
-    url.pathname.startsWith('/onboarding') || url.pathname.endsWith('/relatorio');
-
-  if (isReportOrOnboarding && !isLocalhost) {
-    // Permite acesso público nas 2 demos conceituais da vitrine
+  if (url.pathname.endsWith('/relatorio') && !isLocalhost) {
     const isPortfolioDemo =
       url.pathname.includes('lumina-odontologia-estetica') ||
       url.pathname.includes('vila-pet-veterinaria');
@@ -37,20 +33,16 @@ export async function middleware(req: NextRequest) {
       const secretKey = process.env.ACCESS_SECRET_KEY || 'tl2026';
 
       if (accessKey !== secretKey) {
-        return new NextResponse('Link expirado ou acesso restrito ao proprietário.', {
-          status: 403,
-        });
+        return new NextResponse('Acesso restrito ao proprietário.', { status: 403 });
       }
     }
   }
 
   // =========================================================================
-  // 3. SEPARAÇÃO DE DOMÍNIOS (AGÊNCIA vs PREVIEW vs CLIENTE FINAL)
+  // 3. ROTEAMENTO MULTI-TENANT DE DOMÍNIOS PRÓPRIOS (.com.br)
   // =========================================================================
-  // Coloque aqui o domínio da sua agência quando comprar (ex: 'tracaolocal.com.br')
   const agencyMainDomain = process.env.AGENCY_DOMAIN || '';
 
-  // Se for localhost, .vercel.app (usado para os previews) ou o domínio da agência, segue normal
   if (
     !hostname ||
     isLocalhost ||
@@ -60,7 +52,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Caso você hospede o domínio .com.br de algum cliente do plano mensal (Estrutura Pro / Ecossistema)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -92,7 +83,7 @@ export async function middleware(req: NextRequest) {
       }
     }
   } catch (e) {
-    // Segue fluxo normal
+    // Em caso de falha de rede, segue fluxo normal
   }
 
   return NextResponse.next();
