@@ -573,13 +573,22 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
       <section id="servicos" className="py-16 md:py-24 max-w-6xl mx-auto px-4">
         <div className={`mb-12 ${isIndustrial ? 'border-l-8 border-[var(--color-primary)] pl-5' : 'text-center max-w-2xl mx-auto'}`}>
           <span className="text-xs font-extrabold uppercase tracking-widest text-[var(--color-primary)]">
-            Especialidades & Orçamento Direto
+            {config.niche_type === 'clinica'
+              ? 'Cuidado, Saúde & Agendamento Ágil'
+              : config.niche_type === 'restaurante'
+              ? 'Gastronomia & Destaques da Casa'
+              : 'Especialidades & Atendimento Direto'}
           </span>
           <h2 className={`mt-1 text-2xl sm:text-4xl font-black ${isIndustrial ? 'uppercase' : ''}`}>
-            Principais Serviços de {displayName}
+            {config.section_labels?.services_title || `Principais Destaques de ${displayName}`}
           </h2>
           <p className={`mt-2 text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-slate-600'}`}>
-            Clique no serviço desejado para receber atendimento imediato pelo WhatsApp:
+            {config.section_labels?.services_subtitle ||
+              (config.niche_type === 'clinica'
+                ? 'Selecione o atendimento desejado abaixo para agendar seu horário pelo WhatsApp:'
+                : config.niche_type === 'restaurante'
+                ? 'Conheça os pratos mais elogiados pelos nossos clientes e faça seu pedido ou reserva:'
+                : 'Clique na opção desejada para receber atendimento imediato pelo WhatsApp:')}
           </p>
         </div>
 
@@ -622,12 +631,20 @@ export default async function DynamicLandingPage({ params }: { params: Promise<{
                 key={idx}
                 className="bg-white border-2 border-slate-950 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] flex flex-col justify-between"
               >
-                <div>
+               <div>
                   <div className="bg-slate-950 text-white px-5 py-3 flex items-center justify-between">
                     <span className="font-black text-xs uppercase tracking-widest text-[var(--color-primary)]">
-                      SERVIÇO #{idx + 1}
+                      {config.niche_type === 'restaurante'
+                        ? `DESTAQUE #${idx + 1}`
+                        : config.niche_type === 'clinica'
+                        ? `ESPECIALIDADE #${idx + 1}`
+                        : `SERVIÇO #${idx + 1}`}
                     </span>
-                    <Wrench className="w-4 h-4 text-white/70" />
+                    {config.niche_type === 'clinica' || config.niche_type === 'restaurante' ? (
+                      <Sparkles className="w-4 h-4 text-white/70" />
+                    ) : (
+                      <Wrench className="w-4 h-4 text-white/70" />
+                    )}
                   </div>
                   <div className="p-6">
                     <h3 className="text-xl font-black uppercase text-slate-950">{srv.title}</h3>

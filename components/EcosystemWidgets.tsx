@@ -115,10 +115,10 @@ export default function EcosystemWidgets({
             <div>
               <span className="text-xs font-extrabold uppercase tracking-widest text-[var(--color-primary)] flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5" />
-                <span>Tabela de Serviços & Valores</span>
+                <span>Destaques, Cardápio & Atendimento</span>
               </span>
               <h2 className={`mt-1 text-2xl sm:text-3xl font-black ${isIndustrial ? 'uppercase' : ''}`}>
-                Catálogo Digital — {displayName}
+                Destaques & Valores — {displayName}
               </h2>
               <p className={`mt-1 text-sm ${isDark ? 'text-zinc-400' : 'text-slate-600'}`}>
                 Consulte valores de referência e inicie seu pré-atendimento com 1 clique:
