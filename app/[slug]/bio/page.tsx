@@ -106,6 +106,19 @@ function BioAndQrContent() {
     reviewUrl
   )}`;
 
+  // Se tiver domínio próprio cadastrado no /painel (ex: fgmotorsoficina.com), usa ele!
+  const rawWebsite =
+    lead.custom_domain ||
+    brand.custom_domain ||
+    biz.current_website ||
+    (slug === 'fgmotors' ? 'https://fgmotorsoficina.com' : '');
+
+  const officialSiteUrl = rawWebsite
+    ? rawWebsite.startsWith('http')
+      ? rawWebsite
+      : `https://${rawWebsite}`
+    : `/${slug}`;
+
   function handleVerifyPin(e: React.FormEvent) {
     e.preventDefault();
     if (pinInput.trim() === ADMIN_MASTER_PASS || pinInput.trim() === ownerPin) {
@@ -286,7 +299,9 @@ function BioAndQrContent() {
           </a>
 
           <a
-            href={`/${slug}`}
+            href={officialSiteUrl}
+            target={rawWebsite ? '_blank' : '_self'}
+            rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-2xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 transition"
           >
             <Sparkles className="w-4 h-4 text-[var(--color-primary)]" />
