@@ -23,6 +23,17 @@ const supabase = createClient(
 // Mesma senha mestra do seu /painel
 const ADMIN_MASTER_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'tracao2026';
 
+const BIO_PALETTES: Record<string, string> = {
+  'Crimson Industrial': '#E11D48',
+  'Royal Sapphire': '#1D4ED8',
+  'Emerald Prestige': '#059669',
+  'Ruby Racing': '#DC2626',
+  'Orange Performance': '#EA580C',
+  'Ocean Cyan': '#0284C7',
+  'Indigo Executive': '#4F46E5',
+  'Amber Gold': '#D97706',
+};
+
 function BioAndQrContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -46,7 +57,6 @@ function BioAndQrContent() {
       setLead(data);
       setLoading(false);
 
-      // Se você já estiver logado no /painel neste navegador, libera a placa QR automaticamente
       if (typeof window !== 'undefined') {
         const savedAdmin = localStorage.getItem('agencia_admin_auth');
         if (savedAdmin === ADMIN_MASTER_PASS) {
@@ -59,7 +69,7 @@ function BioAndQrContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center text-sm">
+      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center text-sm">
         Carregando...
       </div>
     );
@@ -67,7 +77,7 @@ function BioAndQrContent() {
 
   if (!lead) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center text-sm">
+      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center text-sm">
         Estabelecimento não encontrado.
       </div>
     );
@@ -81,13 +91,20 @@ function BioAndQrContent() {
 
   const displayName = answers.q1_name || biz.short_name || biz.name;
   const displayAddress = answers.q1_address || config.location?.address || biz.address;
-  const primaryColor = theme.custom_hex || theme.color_primary || '#0284C7';
+
+  // Lê a cor customizada da logo, a paleta escolhida no /painel ou a cor primária salva
+  const paletteHex = theme.palette_name ? BIO_PALETTES[theme.palette_name] : null;
+  const primaryColor =
+    theme.custom_hex ||
+    paletteHex ||
+    theme.color_primary ||
+    '#DC2626';
+
   const logoUrl = brand.logo_url || '';
 
   const cleanPhone = (answers.q2_phone || biz.phone || '').toString().replace(/\D/g, '');
   const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
 
-  // PIN do proprietário: usa o PIN customizado ou os 4 últimos dígitos do telefone da empresa
   const ownerPin = brand.client_pin || cleanPhone.slice(-4) || '1234';
 
   const mainWaUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
@@ -106,7 +123,6 @@ function BioAndQrContent() {
     reviewUrl
   )}`;
 
-  // Se tiver domínio próprio cadastrado no /painel (ex: fgmotorsoficina.com), usa ele!
   const rawWebsite =
     lead.custom_domain ||
     brand.custom_domain ||
@@ -135,16 +151,19 @@ function BioAndQrContent() {
   if (isPlacaMode) {
     if (!isAuthorizedForPlaca) {
       return (
-        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 font-sans">
+        <div
+          style={{ '--color-primary': primaryColor } as React.CSSProperties}
+          className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-4 font-sans"
+        >
           <form
             onSubmit={handleVerifyPin}
-            className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl"
+            className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl"
           >
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)]/15 text-[var(--color-primary)] flex items-center justify-center mx-auto">
               <Lock className="w-6 h-6" />
             </div>
             <h1 className="text-lg font-extrabold">Impressão de Placa QR Code</h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-zinc-400">
               Área exclusiva do proprietário de <strong>{displayName}</strong>. Digite seu código de 4 dígitos para abrir a placa de balcão:
             </p>
             <input
@@ -152,7 +171,7 @@ function BioAndQrContent() {
               placeholder="Código de acesso..."
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value)}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-center text-sm font-bold text-white"
+              className="w-full rounded-xl bg-zinc-950 border border-zinc-700 px-4 py-3 text-center text-sm font-bold text-white"
             />
             {pinError && (
               <p className="text-xs text-rose-400 font-semibold">
@@ -161,7 +180,7 @@ function BioAndQrContent() {
             )}
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs uppercase tracking-wider cursor-pointer"
+              className="w-full py-3 rounded-xl bg-[var(--color-primary)] hover:opacity-90 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer"
             >
               Liberar Placa para Impressão
             </button>
@@ -171,20 +190,20 @@ function BioAndQrContent() {
     }
 
     return (
-      <div className="min-h-screen bg-slate-200 py-8 px-4 flex flex-col items-center justify-center print:bg-white print:p-0">
+      <div className="min-h-screen bg-zinc-200 py-8 px-4 flex flex-col items-center justify-center print:bg-white print:p-0">
         <div className="max-w-md w-full mb-4 flex items-center justify-end print:hidden">
           <button
             onClick={() => window.print()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-extrabold shadow-md hover:bg-slate-800 cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-extrabold shadow-md hover:bg-zinc-800 cursor-pointer"
           >
-            <Printer className="w-4 h-4 text-emerald-400" />
+            <Printer className="w-4 h-4 text-white" />
             <span>Imprimir Placa / Salvar PDF</span>
           </button>
         </div>
 
         <div
           style={{ '--color-primary': primaryColor } as React.CSSProperties}
-          className="bg-white max-w-md w-full rounded-3xl border-4 border-slate-900 p-8 text-center shadow-2xl print:shadow-none print:border-2"
+          className="bg-white max-w-md w-full rounded-3xl border-4 border-[var(--color-primary)] p-8 text-center shadow-2xl print:shadow-none print:border-2"
         >
           {logoUrl ? (
             <img
@@ -198,28 +217,28 @@ function BioAndQrContent() {
             </div>
           )}
 
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+          <h1 className="text-2xl font-black text-zinc-900 uppercase tracking-tight">
             {displayName}
           </h1>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+          <p className="text-xs font-bold text-[var(--color-primary)] uppercase tracking-widest mt-0.5">
             {biz.category}
           </p>
 
-          <div className="my-6 py-4 px-5 rounded-2xl bg-amber-50 border border-amber-200">
+          <div className="my-6 py-4 px-5 rounded-2xl bg-zinc-50 border border-zinc-200">
             <div className="flex justify-center gap-1.5 text-amber-400 mb-2">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-6 h-6 fill-amber-400" />
               ))}
             </div>
-            <h2 className="text-lg font-extrabold text-slate-900">
+            <h2 className="text-lg font-extrabold text-zinc-900">
               Gostou do nosso atendimento?
             </h2>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-zinc-600 mt-1">
               Aponte a câmera do seu celular para o código abaixo e deixe sua avaliação no Google em 10 segundos!
             </p>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-slate-300 inline-block mx-auto">
+          <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-[var(--color-primary)] inline-block mx-auto">
             <img
               src={qrCodeImageUrl}
               alt="QR Code de Avaliação no Google"
@@ -229,8 +248,8 @@ function BioAndQrContent() {
             />
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-2 text-xs font-bold text-slate-700">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs font-bold text-zinc-700">
+            <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)]" />
             <span>Sua opinião ajuda muito o nosso trabalho!</span>
           </div>
         </div>
@@ -239,40 +258,50 @@ function BioAndQrContent() {
   }
 
   // =========================================================================
-  // MODO PÁGINA "LINK NA BIO" (100% LIMPA PARA O CLIENTE FINAL)
+  // MODO PÁGINA "LINK NA BIO" (COM AS CORES DA IDENTIDADE DA EMPRESA)
   // =========================================================================
   return (
     <div
       style={{ '--color-primary': primaryColor } as React.CSSProperties}
-      className="min-h-screen bg-slate-950 text-white py-10 px-4 flex flex-col items-center justify-between font-sans"
+      className="min-h-screen bg-zinc-950 text-white py-10 px-4 flex flex-col items-center justify-between font-sans relative overflow-hidden"
     >
+      {/* Faixa superior e brilho suave na cor exata da empresa */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-[var(--color-primary)]" />
+      <div
+        className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 rounded-full blur-3xl opacity-20 pointer-events-none"
+        style={{ backgroundColor: primaryColor }}
+      />
+
       <ClickTracker slug={slug} ga4Id={brand.ga4_id} />
 
-      <div className="max-w-md w-full space-y-6">
+      <div className="max-w-md w-full space-y-6 relative z-10">
         <div className="text-center space-y-3">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={displayName}
-              className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-[var(--color-primary)] bg-white p-1"
+              className="w-24 h-24 rounded-2xl object-contain mx-auto border-2 border-[var(--color-primary)] bg-zinc-900 p-2 shadow-xl"
             />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-[var(--color-primary)] text-white font-black text-3xl flex items-center justify-center mx-auto shadow-lg">
+            <div className="w-20 h-20 rounded-2xl bg-[var(--color-primary)] text-white font-black text-3xl flex items-center justify-center mx-auto shadow-lg">
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
 
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">{displayName}</h1>
-            <p className="text-xs text-slate-400 mt-1">{biz.category}</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-primary)] mt-1">
+              {biz.category}
+            </p>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs font-bold">
             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
             <span>Nota {biz.rating} no Google ({biz.reviews_count} avaliações)</span>
           </div>
         </div>
 
+        {/* Botões Principais com a Cor da Empresa em Destaque */}
         <div className="space-y-3">
           <a
             href={mainWaUrl}
@@ -280,10 +309,20 @@ function BioAndQrContent() {
             rel="noopener noreferrer"
             data-track="whatsapp-click"
             data-location="bio-main-cta"
-            className="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-2xl font-extrabold text-base bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg transition"
+            className="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-2xl font-extrabold text-base bg-[var(--color-primary)] hover:opacity-90 text-white shadow-lg transition"
           >
             <MessageCircle className="w-5 h-5" />
             <span>Chamar no WhatsApp Agora</span>
+          </a>
+
+          <a
+            href={officialSiteUrl}
+            target={rawWebsite ? '_blank' : '_self'}
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-2xl font-bold text-sm bg-zinc-900 hover:bg-zinc-800 text-white border border-[var(--color-primary)]/40 transition"
+          >
+            <Sparkles className="w-4 h-4 text-[var(--color-primary)]" />
+            <span>Acessar Nosso Site Oficial</span>
           </a>
 
           <a
@@ -292,27 +331,17 @@ function BioAndQrContent() {
             rel="noopener noreferrer"
             data-track="review-click"
             data-location="bio-review-cta"
-            className="flex items-center justify-center gap-2.5 w-full py-3.5 px-5 rounded-2xl font-bold text-sm bg-amber-400 hover:bg-amber-300 text-slate-950 transition"
+            className="flex items-center justify-center gap-2.5 w-full py-3.5 px-5 rounded-2xl font-bold text-sm bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-zinc-800 transition"
           >
-            <Star className="w-4 h-4 fill-slate-950" />
+            <Star className="w-4 h-4 fill-amber-400" />
             <span>Avaliar Nosso Atendimento no Google</span>
-          </a>
-
-          <a
-            href={officialSiteUrl}
-            target={rawWebsite ? '_blank' : '_self'}
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-2xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 transition"
-          >
-            <Sparkles className="w-4 h-4 text-[var(--color-primary)]" />
-            <span>Acessar Nosso Site Completo</span>
           </a>
         </div>
 
         {(config.services || []).length > 0 && (
           <div className="pt-2 space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">
-              Orçamento Rápido por Serviço
+            <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 text-center">
+              Atendimento Rápido por Especialidade
             </p>
             {(config.services || []).map((srv: any, idx: number) => {
               const srvWa = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
@@ -326,21 +355,23 @@ function BioAndQrContent() {
                   rel="noopener noreferrer"
                   data-track="whatsapp-click"
                   data-location={`bio-service-${idx + 1}`}
-                  className="flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-left transition"
+                  className="flex items-center justify-between w-full p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-800 hover:border-[var(--color-primary)]/60 text-left transition group"
                 >
                   <div>
-                    <span className="font-bold text-sm text-white block">{srv.title}</span>
-                    <span className="text-xs text-slate-400 line-clamp-1">{srv.description}</span>
+                    <span className="font-bold text-sm text-white block group-hover:text-[var(--color-primary)] transition">
+                      {srv.title}
+                    </span>
+                    <span className="text-xs text-zinc-400 line-clamp-1">{srv.description}</span>
                   </div>
-                  <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0 ml-3" />
+                  <MessageCircle className="w-4 h-4 text-[var(--color-primary)] shrink-0 ml-3" />
                 </a>
               );
             })}
           </div>
         )}
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3 text-xs">
-          <div className="flex items-start gap-2.5 text-slate-300">
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-3 text-xs">
+          <div className="flex items-start gap-2.5 text-zinc-300">
             <MapPin className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-0.5" />
             <span>{displayAddress}</span>
           </div>
@@ -350,15 +381,15 @@ function BioAndQrContent() {
             rel="noopener noreferrer"
             data-track="maps-click"
             data-location="bio-maps"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold bg-[var(--color-primary)] text-white hover:opacity-90 transition"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition"
           >
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="w-4 h-4 text-[var(--color-primary)]" />
             <span>Traçar Rota no Google Maps</span>
           </a>
         </div>
       </div>
 
-      <div className="mt-10 pt-4 text-center text-[11px] text-slate-600">
+      <div className="mt-10 pt-4 text-center text-[11px] text-zinc-600 relative z-10">
         © {new Date().getFullYear()} {displayName}
       </div>
     </div>
