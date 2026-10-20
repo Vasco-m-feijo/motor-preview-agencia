@@ -9,6 +9,12 @@ export async function middleware(req: NextRequest) {
   const hostname = (req.headers.get('host') || '').replace(/^www\./, '').toLowerCase();
   const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
 
+  // Se o visitante acessar bio.fgmotorsoficina.com, exibe /fgmotors/bio sem mudar a URL na barra!
+  if (hostname === 'bio.fgmotorsoficina.com') {
+    url.pathname = '/fgmotors/bio';
+    return NextResponse.rewrite(url);
+  }
+
   // =========================================================================
   // 1. DESVINCULAR /painel E /onboarding DA INTERNET PÚBLICA
   // =========================================================================
